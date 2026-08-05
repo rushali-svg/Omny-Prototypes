@@ -13,7 +13,7 @@ Interactive HTML prototypes for Omny UX iterations. Each prototype lives in its 
 | Prototype | Version | Status | Validated / Discussed | Live Link |
 |---|---|---|---|---|
 | Filter dropdown UX (draft model: Apply / Discard, top-aligned Clear) | v1 | ✅ Finalized — Jun 30 sync | [Meeting](https://fathom.video/calls/729690373) | [View](https://rushali-svg.github.io/Omny-Prototypes/dashboard/filter-UX-v1.html) |
-| Evolution Mode (±% changes across tabs, pp for TACOS/ROAS) | final* | 🔄 Iterating — PPC/DSP TACOS split requested Jul 29 | [Meeting](https://fathom.video/calls/763172977) | [View](https://rushali-svg.github.io/Omny-Prototypes/dashboard/evolution-mode-final-prototype.html) |
+| Evolution Mode (±% changes across tabs, pp for TACOS/ROAS) | final* | 🔄 Iterating — PPC/DSP TACOS split requested Jul 29 | [Meeting](https://fathom.video/calls/763172977) | [View](https://rushali-svg.github.io/Omny-Prototypes/dashboard/evolution-mode-prototype-v1.html) |
 
 ## PPC Module — Strategy Layer / Portfolio Management
 
