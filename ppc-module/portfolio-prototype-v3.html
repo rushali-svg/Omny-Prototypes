@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPC Management — Portfolios (Omny) · v5</title>
+<style>
+  :root{
+    /* ===== Figma design tokens (PPC – Omny) ===== */
+    /* blue / accent */
+    --accent:#2172e1;--accent-weak:#f4f8ff;--accent-bd:#8ab4ff;--blue-100:#edf5ff;--blue-300:#adcdff;--blue-500:#669eff;--blue-600:#4c8eff;--band-bg:#f0f6ff;
+    /* ink / greys */
+    --ink:#3d3d3d;--ink-2:#757575;--ink-3:#999999;--ink-strong:#2e2e2e;--grey-1000:#4d4d4d;
+    --line:#eeeeee;--line-2:#e3e3e3;--grey-400:#d1d1d1;--grey-500:#bfbfbf;
+    --panel:#fafafa;--panel-2:#f8f9ff;--cool-100:#f2f4f8;--cool-150:#e8ebf3;--cool-200:#dde1e6;--cool-700:#71777f;
+    /* portfolio / brand (indigo) */
+    --pf:#5a52ae;--pf-bg:#f3eeff;--pf-bd:#e4dfff;--pf-hover:#f8f9ff;--pf-strong:#312783;--pf-700:#8d85e5;
+    /* purple / lavender */
+    --lav:#f6f2ff;--lav-2:#ece7fa;--purple:#b885ff;--purple-bg:#f6f2ff;
+    /* data */
+    --blue-line:#2f90de;--green:#22863d;--green-600:#47d16c;--green-100:#defbe6;--red:#db333b;--red-50:#fff0f1;
+    --amber:#f0c329;--amber-700:#8f710a;--yellow-200:#faebb7;--orange:#ff8933;--orange-500:#ff9d57;--orange-100:#fff2e8;
+    /* misc */
+    --primary:#22863d;--primary-h:#1c6f33;--gold:#c8b06b;--rail:#191a1c;--rail-ink:#8b8f96;
+    --sans:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --shadow-card:0 1px 2px rgba(16,24,40,.05);
+    /* radii */
+    --r-lg:12px;--r:8px;--r-sm:4px;
+    /* layout: page container bg + one consistent padding step */
+    --page-bg:#fafafa;--pad:24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .app{display:grid;grid-template-columns:60px minmax(0,1fr);min-height:100vh}
+  .rail{background:var(--rail);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:22px;position:sticky;top:0;height:100vh}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--gold);color:#2a230c;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .rail i{color:var(--rail-ink);font-size:19px;cursor:pointer}.rail i:hover{color:#cfd3d9}.rail .active-i{color:#fff}.rail .spacer{flex:1}
+  .main{padding:0;width:100%;min-width:0}
+  /* one container for everything below nav2 — Figma section-wrapper */
+  .pagewrap{background:var(--page-bg);padding:var(--pad);display:flex;flex-direction:column;gap:20px;min-width:0}
+  .tip{position:relative}
+  .tt{position:fixed;background:#2e2e2e;color:#fff;font-size:12px;line-height:1.45;padding:8px 11px;border-radius:var(--r);white-space:normal;max-width:260px;text-align:left;z-index:200;box-shadow:0 8px 22px rgba(0,0,0,.28);pointer-events:none;opacity:0;transform:translateY(3px);transition:opacity .12s,transform .12s;font-family:var(--sans);font-weight:500}
+  .tt.on{opacity:1;transform:none}
+
+  .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0;padding:18px var(--pad) 14px}
+  .h-title{font-size:19px;font-weight:600;letter-spacing:-.2px}
+  .selector{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line-2);border-radius:10px;padding:8px 12px;font-size:13px}
+  .selector .badge{background:var(--accent);color:#fff;font-size:11px;min-width:18px;height:18px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-weight:600}
+  .flag{width:18px;height:12px;border-radius:2px;display:inline-block}
+  .nav2{display:flex;gap:8px;margin:0;padding:0 var(--pad) 12px;border-bottom:1px solid var(--line-2)}
+  .nav2 a{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--r);font-size:14px;color:var(--ink-2);cursor:pointer}
+  .nav2 a i{font-size:18px}.nav2 a:hover:not(.on){background:#f6f7f9}
+  .nav2 a.on{background:#f4f4f4;color:var(--ink);font-weight:500}
+
+  .cardswrap{position:relative;margin:26px 0 0;background:var(--band-bg);border:1px solid var(--blue-300);border-bottom:0;border-radius:var(--r) var(--r) 0 0;padding:6px 6px 0}
+  /* Figma: pill sits flush ABOVE the band top edge (tab), not overlapping it */
+  .pause{position:absolute;top:0;left:0;right:0;transform:translateY(-100%);display:flex;justify-content:center;z-index:3;pointer-events:none}
+  .pause button{pointer-events:auto;display:inline-flex;align-items:center;gap:4px;font:inherit;font-size:14px;font-weight:500;color:var(--blue-500);background:linear-gradient(180deg,var(--blue-100),var(--band-bg));border:1px solid var(--blue-300);border-bottom:0;border-radius:6px 6px 0 0;padding:5px 8px 4px;cursor:pointer}
+  .pause button i{font-size:16px}
+  .cards{display:grid;grid-template-columns:1fr 1fr 1fr;background:#fff;border:1px solid var(--cool-150);border-radius:var(--r) var(--r) 0 0;overflow:hidden}
+  .setcard{padding:16px 20px;border-right:1px solid var(--cool-150);position:relative;cursor:pointer;transition:background .12s}
+  .setcard:last-child{border-right:0}.setcard:hover:not(.on){background:#fafbfc}
+  .setcard.on{background:var(--accent-weak);box-shadow:inset 0 0 0 1px var(--accent-bd);border-radius:var(--r) var(--r) 0 0}
+  .setcard .r1{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:500;color:var(--ink);line-height:1.2}
+  .setcard .r1 i{font-size:20px;color:var(--ink)}
+  .setcard.on .r1{color:var(--accent);font-weight:600}.setcard.on .r1 i{color:var(--accent)}
+  .setcard p{margin:4px 0 0 28px;font-size:15px;color:var(--ink-3);line-height:1.4}
+  .setcard.on p{color:var(--ink-2)}
+  .uline{height:0;margin:0}
+
+  /* ============ PORTFOLIO STRIP (in content, below cards) ============ */
+  .pstrip{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line-2);border-radius:14px;padding:11px 13px;margin:0;box-shadow:var(--shadow-card);flex-wrap:wrap;position:relative;z-index:20}
+  .pgridbtn{width:42px;height:42px;flex:0 0 auto;border:0;border-radius:11px;background:var(--pf-bg);color:var(--pf);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .13s,transform .1s}
+  .pgridbtn i{font-size:21px}
+  .pgridbtn:hover{background:#e4e0f9}
+  .pgridbtn:active{transform:scale(.96)}
+  .pgridbtn.on{background:var(--pf);color:#fff}
+  .pdiv{width:1px;height:26px;background:var(--line-2);flex:0 0 auto}
+  .plabel{font-size:11.5px;font-weight:700;letter-spacing:1.3px;color:var(--ink-3);white-space:nowrap}
+  .ppills{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+  .ppill{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line-2);background:#fff;border-radius:11px;padding:9px 15px;font-size:14px;color:var(--ink);cursor:pointer;transition:border-color .13s,background .13s;max-width:300px;position:relative}
+  .ppill:hover{border-color:var(--pf-bd);background:var(--pf-hover)}
+  .ppill .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+  .ppill .sub{color:var(--ink-3);font-weight:400}
+  .ppill.on{background:var(--pf-bg);border-color:var(--pf-bd);color:var(--pf)}
+  .ppill.on .nm{font-weight:600}
+  .ppill.on .sub{color:#8d84dd}
+  .ppill i.lead{font-size:17px;color:var(--ink-2)}
+  .ppill.on i.lead{color:var(--pf)}
+  .sdot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .pdots{border:0;background:transparent;color:var(--pf);cursor:pointer;padding:0 0 0 3px;font-size:17px;line-height:1;display:inline-flex;align-items:center;opacity:.75;border-radius:5px}
+  .pdots:hover{opacity:1}
+  .pnew{font-size:10px;background:#e6f6ec;color:#1f8a4c;border-radius:5px;padding:1px 6px;font-weight:700}
+  .pcreate{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:14px;color:var(--pf);background:#fff;border:1px solid var(--pf-bd);border-radius:11px;padding:10px 17px;cursor:pointer;transition:background .13s;white-space:nowrap}
+  .pcreate:hover{background:var(--pf-hover)}
+  .pcreate i{font-size:18px}
+
+  .pmenu{position:absolute;top:calc(100% + 8px);background:#fff;border:1px solid var(--line-2);border-radius:12px;box-shadow:0 14px 40px rgba(16,24,40,.18);z-index:60;padding:6px;width:250px;display:none}
+  .pmenu.on{display:block}
+  .pmi{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:9px;font-size:14px;cursor:pointer;color:var(--ink)}
+  .pmi:hover{background:var(--panel)}
+  .pmi i{font-size:18px;color:var(--ink-2)}
+  .pmi .hint{margin-left:auto;font-size:11.5px;color:var(--ink-3)}
+  .pmi.danger{color:var(--red)}.pmi.danger i{color:var(--red)}
+  .pmi.danger:hover{background:#fdf1f0}
+  .pmsep{height:1px;background:var(--line);margin:4px 4px}
+
+  .stripnote{display:flex;align-items:center;gap:9px;background:var(--panel);border:1px dashed var(--line-2);border-radius:11px;padding:11px 14px;margin-top:-10px;font-size:12.5px;color:var(--ink-2)}
+  .stripnote i{font-size:16px;color:var(--ink-3)}
+  .stripnote b{font-weight:600;color:var(--ink)}
+
+  /* white card shell wrapping each table (header + body) */
+  .tcard{background:#fff;border:1px solid var(--line-2);border-radius:var(--r-lg);box-shadow:var(--shadow-card);overflow:hidden;min-width:0}
+  .exhead{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0;background:#fff;border:0;border-bottom:1px solid var(--line-2);border-radius:0;padding:16px 24px}
+  .exhead .title{font-size:16px;font-weight:600;color:var(--ink-strong);white-space:nowrap;line-height:1.4}
+  .exhead .cw{display:inline-flex;align-items:center;gap:4px;font-size:14px;font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .exhead .cw i{font-size:15px}
+  .exhead .grow{flex:1}
+  .exhead .scopetag{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;border-radius:8px;padding:5px 11px}
+  .createstrat{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--pf-strong);color:var(--pf-strong);background:#fff;border-radius:var(--r);padding:8px 16px 8px 12px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .12s}
+  .createstrat i{font-size:20px}
+  .createstrat:hover{background:var(--pf-hover)}
+
+  /* ============ no-data state (new portfolio) ============ */
+  .nodata{border:0;border-radius:0;background:#fff;padding:38px 26px;text-align:center}
+  .nodata .ic{width:52px;height:52px;border-radius:14px;background:var(--pf-bg);color:var(--pf);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+  .nodata .ic i{font-size:26px}
+  .nodata h4{margin:0 0 7px;font-size:15.5px;font-weight:600}
+  .nodata p{margin:0 auto;font-size:13px;color:var(--ink-3);line-height:1.55;max-width:480px}
+  .nodata .steps{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+  .nstep{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line-2);border-radius:10px;padding:9px 13px;font-size:12.5px;color:var(--ink-2)}
+  .nstep i{font-size:15px;color:var(--pf)}
+  .nstep b{color:var(--ink);font-weight:600}
+
+  .scrollx{overflow-x:auto}
+  /* ===== timeline: real week grid, bounded scroll, sticky label ===== */
+  .tlscroll{overflow-x:auto;overflow-y:hidden;position:relative}
+  .tl{background:#fff;border:0;border-radius:0;position:relative;min-width:max-content}
+  .tlrow{display:grid;grid-template-columns:180px repeat(var(--nw),minmax(92px,1fr));border-bottom:1px solid var(--line);align-items:stretch;position:relative;z-index:1;background:transparent}
+  .tlrow:last-child{border-bottom:0}
+  .tlrow .lab{position:sticky;left:0;z-index:6;background:#fff;font-size:13px;color:var(--ink-2);text-align:right;
+    padding:0 16px;min-height:44px;display:flex;align-items:center;justify-content:flex-end;gap:5px;line-height:1.25}
+  .tl.scrolled .tlrow .lab{border-right:1px solid var(--line-2);box-shadow:8px 0 14px -8px rgba(16,24,40,.28)}
+  .wc{display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;color:var(--ink);min-height:44px;position:relative}
+  .wc.hd{font-size:13px;color:var(--ink-2);min-height:38px}
+  .wc b{font-weight:600}.wc .d{font-size:11.5px;font-weight:600}
+  .sdotx{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .area{grid-column:2 / -1;position:relative}
+  .linewrap{position:relative;width:100%}
+  .ptlab{position:absolute;font-size:12px;font-weight:600;white-space:nowrap;letter-spacing:-.1px}
+  /* column overlay: separators + current week + hover highlight (visual only) */
+  .ovlay{position:absolute;inset:0;display:grid;grid-template-columns:180px repeat(var(--nw),minmax(92px,1fr));pointer-events:none;z-index:0}
+  .ovlay .ov{border-left:1px solid var(--line)}
+  .ovlay .ov.now{background:var(--lav)}
+  .ovlay .ov.hot{background:rgba(47,107,243,.06)}
+  .ovlay .ov.past.hot{background:rgba(0,0,0,.035)}
+  .wc.now,.wc.hd.now{background:transparent}
+  /* strategy row */
+  .srow{min-height:56px}
+  .sstrip{grid-row:1;margin:7px 4px;display:flex;align-items:center;gap:2px;padding:0 10px;border:1px solid var(--line-2);
+    border-radius:var(--r);background:#fff;position:relative;z-index:4;min-height:34px;transition:border-color .12s,box-shadow .12s}
+  .sstrip:hover{border-color:var(--blue-300);box-shadow:0 1px 4px rgba(16,24,40,.1)}
+  .sstrip.ro{background:var(--panel);color:var(--ink-3)}
+  .sstrip.ro .vchip{background:#eef0f3;border-color:var(--line-2);color:var(--ink-2)}
+  .sstrip.ro:hover{border-color:var(--line-2);box-shadow:none}
+  .sacts{display:none;align-items:center;gap:4px;margin-left:auto}
+  .sstrip:hover .sacts{display:inline-flex}
+  .sact{width:26px;height:26px;border:1px solid var(--line-2);background:#fff;border-radius:6px;color:var(--ink-2);
+    display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .sact i{font-size:15px}
+  .sact:hover{background:var(--blue-100);border-color:var(--blue-300);color:var(--accent)}
+  .sact.del:hover{background:var(--red-50);border-color:#f3c8c9;color:var(--red)}
+  /* create-strategy affordance in a free active/future column */
+  .sfree{z-index:4;padding:0}
+  .mkstrat{display:none;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:absolute;
+    inset:5px 4px;border:1px dashed var(--pf-bd);border-radius:var(--r);background:#fdf1f0;color:var(--pf-strong);
+    font:inherit;font-size:11.5px;font-weight:600;line-height:1.25;text-align:center;cursor:pointer}
+  .mkstrat i{font-size:15px}
+  .mkstrat:hover{background:#f8ecf9;border-color:var(--pf)}
+  .srow .sfree:hover .mkstrat{display:flex}
+  .vchip{display:inline-flex;align-items:center;gap:5px;background:var(--blue-100);border:1px solid var(--blue-300);color:var(--accent);border-radius:var(--r-sm);font-size:13px;padding:3px 9px;font-weight:500;white-space:nowrap}
+  .vpct{font-size:13px;color:var(--ink-2);font-weight:500;margin-left:7px;white-space:nowrap}
+  .tl.ro .mkstrat,.tl.ro .sacts{display:none !important}
+
+  .alloc-h{display:flex;align-items:center;gap:10px;margin:0;padding:16px 24px 0}
+  .alloc-h .grow{flex:1;min-width:8px}
+  .alloc-h h2{margin:0}
+  .alloc-h i{font-size:20px;color:var(--ink-2)}.alloc-h h2{font-size:17px;font-weight:600;margin:0}
+  .alloc-sub{font-size:12.5px;color:var(--ink-3);margin:0;padding:4px 24px 14px 54px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .ptable{background:#fff;border:0;border-top:1px solid var(--line-2);border-radius:0;overflow:hidden;min-width:1620px}
+  .pgrid{display:grid;grid-template-columns:44px 54px 34px minmax(306px,1fr) 96px 100px 96px 78px 100px 108px 96px 96px 108px 96px 96px}
+  .pgrid > div{padding:10px;font-size:12.5px;border-bottom:1px solid #f1f2f5;border-right:1px solid var(--line);display:flex;align-items:center;position:relative;transition:background .1s}
+  .pgrid > div:nth-child(15n){border-right:0}
+  /* cell + column hover */
+  .pgrid > div.colhl,.tlcell.colhl{background-color:#f0f4fb}
+  .pgrid > div.cellhl,.tlcell.cellhl{background-color:#edf5ff;box-shadow:inset 0 0 0 1px #adcdff}
+
+  .bannerrow > div{min-height:40px;padding:0;border-bottom:1px solid var(--line)}
+  .banner-amt{grid-column:10 / 16;background:#fdf3e6;display:flex;align-items:center;gap:8px;padding:0 18px;font-size:12.5px;color:var(--amber)}
+  .banner-amt b{color:#b56a12;font-size:16px}
+  .totalrow > div{background:var(--lav);border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-2);min-height:46px;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px}
+  .totalrow .amt{font-weight:600;color:var(--ink);font-size:13px}.totalrow .pos{color:var(--green);font-size:11.5px}
+  .totalrow .cpy{color:var(--ink-3);font-size:11px;display:inline-flex;align-items:center;gap:4px}
+  .toolrow > div{border-bottom:1px solid var(--line);min-height:52px}
+  .tool-l{grid-column:1 / 6;padding:0 14px;display:flex;align-items:center}
+  .searchbox{position:relative;width:100%;max-width:360px}
+  .searchbox i{position:absolute;left:12px;top:10px;color:var(--ink-3);font-size:17px}
+  .searchbox input{width:100%;border:1px solid var(--line-2);border-radius:9px;padding:9px 12px 9px 36px;font:inherit;font-size:13px}
+  .tool-prio{grid-column:6 / 7;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px}
+  .prioritized{background:#eef0f3;color:var(--ink-2);border-radius:8px;font-size:11.5px;padding:5px 11px;display:inline-flex;align-items:center;gap:5px}
+  .tool-roas{grid-column:7 / 10;display:flex;align-items:center;justify-content:flex-end;padding:0 14px;gap:9px}
+  .toggle{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2)}
+  .sw{width:38px;height:21px;border-radius:11px;background:var(--accent);position:relative}
+  .sw::after{content:"";position:absolute;top:2.5px;right:2.5px;width:16px;height:16px;border-radius:50%;background:#fff}
+  .orange-l{box-shadow:inset 2px 0 0 var(--orange)}.orange-r{box-shadow:inset -2px 0 0 var(--orange)}
+  .grouprow > div{background:#fafbfc;border-bottom:1px solid var(--line);color:var(--ink-3);font-size:11px;min-height:34px}
+  .headrow > div{background:#fff;border-bottom:1px solid var(--line);color:var(--ink-3);font-size:11.5px;font-weight:500;min-height:46px;align-items:flex-end;line-height:1.25}
+  .headrow .num{justify-content:flex-end;text-align:right}
+  .col-perf{background:var(--lav) !important}
+  .col-perf.colhl{background-color:#eae3fa !important}
+  .col-perf.cellhl{background-color:#ded3f8 !important;box-shadow:inset 0 0 0 1px #b885ff}
+  .pgrp{gap:11px}
+  .pthumb{width:36px;height:36px;border-radius:8px;flex:0 0 auto;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}
+  .pname{font-size:12.5px;line-height:1.25}
+  .pname .meta{display:flex;gap:6px;align-items:center;color:var(--ink-3);font-size:10.5px;margin-top:4px}
+  .pfchip{display:inline-flex;align-items:center;gap:5px;border-radius:6px;font-size:10.5px;padding:2px 8px;margin-top:5px;width:max-content}
+  .ic{color:var(--ink-3);font-size:17px}
+  .num{justify-content:flex-end}
+  .mult{color:var(--accent);font-weight:600}.amt{font-weight:600}.sub2{color:var(--ink-3);font-size:10.5px}
+  .col2{flex-direction:column;align-items:flex-end;justify-content:center;gap:2px}
+  .circ{width:14px;height:14px;border-radius:50%;border:2.5px solid var(--green);display:inline-block;flex:0 0 auto}
+  .gtoggle{width:38px;height:21px;border-radius:11px;background:var(--green);position:relative;flex:0 0 auto}
+  .gtoggle::after{content:"";position:absolute;top:2.5px;left:19px;width:16px;height:16px;border-radius:50%;background:#fff}
+  .gtoggle.off{background:#cfd4db}.gtoggle.off::after{left:2.5px}
+  .empty-t{padding:44px 26px;text-align:center;color:var(--ink-3);font-size:13px}
+  .empty-t i.big{font-size:26px;display:block;margin-bottom:10px;color:var(--ink-3)}
+  .empty-t b{color:var(--ink)}
+  .btn-inline{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;color:#fff;background:var(--pf);border:1px solid var(--pf);border-radius:9px;padding:9px 15px;cursor:pointer;margin-top:14px}
+  .btn-inline:hover{background:#5d51c2}
+
+  /* ============ MANAGE — cards ============ */
+  .mv-top{display:flex;align-items:center;gap:12px;margin:6px 0 6px;flex-wrap:wrap}
+  .mv-top h2{font-size:20px;font-weight:600;margin:0;display:inline-flex;align-items:center;gap:10px}
+  .mv-top h2 i{color:var(--pf)}
+  .mv-top .grow{flex:1}
+  .backlink{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--pf);cursor:pointer;margin-bottom:12px}
+  .backlink:hover{text-decoration:underline}
+  .mv-sub{font-size:13px;color:var(--ink-3);margin:0 0 22px;max-width:700px;line-height:1.55}
+  .cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+  /* all-portfolios: full-width cards stacked vertically */
+  .mstack{display:flex;flex-direction:column;gap:16px;min-width:0}
+  .mrow{width:100%;min-width:0}
+  /* manage row header: identity line + metrics line (clear hierarchy) */
+  .mhead2{background:#fff;border-bottom:1px solid var(--line-2);padding:14px 24px 12px;display:flex;flex-direction:column;gap:7px}
+  .mid-1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mid-1 .grow{flex:1;min-width:8px}
+  .mname{display:inline-flex;align-items:center;gap:9px;font-size:16px;font-weight:600;color:var(--ink-strong);line-height:1.4}
+  .mid-2{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
+  .mkpi{display:inline-flex;align-items:center;gap:5px}
+  .mkpi i{font-size:15px;color:var(--ink-3)}
+  .mid-2 .msep{color:var(--grey-400)}
+  /* strategy status chip */
+  .stratchip{display:inline-flex;align-items:center;gap:5px;background:var(--blue-100);border:1px solid var(--blue-300);color:var(--accent);border-radius:var(--r-sm);font-size:12.5px;font-weight:500;padding:3px 9px;white-space:nowrap}
+  .stratchip i{font-size:14px}
+  .stratchip.none{background:var(--yellow-200);border-color:#e8d391;color:var(--amber-700)}
+  /* read-only row body message */
+  .mempty{display:flex;align-items:flex-start;gap:12px;padding:22px 24px;background:#fff;color:var(--ink-2);font-size:13px}
+  .mempty > i{font-size:20px;color:var(--ink-3);margin-top:1px}
+  .mempty div{display:flex;flex-direction:column;gap:3px}
+  .mempty b{color:var(--ink);font-size:13.5px}
+  .mempty span{color:var(--ink-3);line-height:1.5}
+  /* all-portfolios timeline: scrollable but NOT interactive */
+  .nohover .tlcell,.nohover .stratbox{cursor:default}
+  .nohover .stratbox:hover{background:#fff;border-color:var(--line-2);box-shadow:none}
+  .nohover .scrollx{cursor:grab}
+  .verswitch{position:fixed;left:18px;bottom:20px;z-index:76;display:inline-flex;align-items:center;gap:4px;
+    background:#fff;border:1px solid var(--line-2);border-radius:999px;padding:5px 6px 5px 12px;box-shadow:0 6px 20px rgba(16,24,40,.14)}
+  .verswitch .vlabel{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);margin-right:4px}
+  .vopt{border:0;background:transparent;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-2);
+    border-radius:999px;padding:6px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .vopt span{font-weight:400;font-size:11.5px;color:var(--ink-3)}
+  .vopt:hover{background:var(--panel)}
+  .vopt.on{background:var(--pf);color:#fff}.vopt.on span{color:rgba(255,255,255,.75)}
+  .mv-top{margin:0 0 6px}
+  .mv-sub{margin:0 0 4px}
+  .pcard{border:1px solid var(--line);border-top:3px solid var(--line);border-radius:14px;background:#fff;box-shadow:var(--shadow-card);overflow:hidden;transition:box-shadow .16s,transform .12s,border-color .16s;display:flex;flex-direction:column}
+  .pcard:hover{box-shadow:0 8px 26px rgba(16,24,40,.1);transform:translateY(-2px)}
+  .pc-head{padding:15px 16px 0;display:flex;align-items:flex-start;gap:9px}
+  .pc-name{font-size:15px;font-weight:600;display:flex;align-items:center;gap:9px;min-width:0}
+  .pc-name .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pc-menu{margin-left:auto;position:relative}
+  .pc-dots{border:0;background:transparent;color:var(--ink-3);font-size:18px;cursor:pointer;padding:2px 4px;border-radius:6px;line-height:1}
+  .pc-dots:hover{background:var(--panel);color:var(--ink)}
+  .pc-body{padding:12px 16px 0}
+  .pc-big{font-size:26px;font-weight:600;letter-spacing:-.4px}
+  .pc-big small{font-size:12px;color:var(--ink-3);font-weight:400;letter-spacing:0}
+  .pc-meta{font-size:12.5px;color:var(--ink-2);margin-top:4px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .pc-meta i{font-size:14px;color:var(--ink-3)}
+  .pc-chart{padding:14px 16px 4px}
+  .pc-clab{display:flex;align-items:center;gap:12px;font-size:10.5px;color:var(--ink-3);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+  .pc-clab .k{display:inline-flex;align-items:center;gap:5px}
+  .pc-clab .sq{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .pc-util{padding:0 16px 14px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-2)}
+  .pc-util .bar{flex:1;height:6px;border-radius:4px;background:#eef0f3;overflow:hidden}
+  .pc-util .bar > span{display:block;height:100%;border-radius:4px}
+  .pc-util b{font-weight:600;color:var(--ink)}
+  .pc-foot{margin-top:auto;padding:12px 16px;border-top:1px solid var(--line);background:var(--panel-2);display:flex;align-items:center;gap:8px;font-size:13px;color:var(--pf);font-weight:500;cursor:pointer}
+  .pc-foot:hover{background:var(--pf-hover)}
+  .pc-nodata{padding:20px 16px;text-align:center;color:var(--ink-3);font-size:12px;background:var(--panel-2);border-radius:10px;margin:6px 16px 14px;border:1px dashed var(--line-2)}
+  .pc-nodata i{font-size:18px;display:block;margin-bottom:6px}
+  .pcard.add{border:1px dashed var(--pf-bd);border-top:1px dashed var(--pf-bd);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--pf);font-size:14px;font-weight:500;cursor:pointer;min-height:300px;background:var(--panel-2)}
+  .pcard.add:hover{background:var(--pf-hover)}
+  .pcard.add .plus{width:46px;height:46px;border-radius:13px;background:var(--pf-bg);display:flex;align-items:center;justify-content:center}
+  .pcard.add .plus i{font-size:24px}
+  .pcard.add small{color:var(--ink-3);font-weight:400;font-size:12px;max-width:210px;text-align:center;line-height:1.45}
+  .systag{font-size:10px;background:#eef0f3;color:var(--ink-3);border-radius:5px;padding:2px 7px;font-weight:600;letter-spacing:.3px}
+
+  /* ============ modals ============ */
+  .scrim{position:fixed;inset:0;background:rgba(20,24,31,.42);z-index:80;opacity:0;pointer-events:none;transition:opacity .18s}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .modalhost{position:fixed;inset:0;z-index:81;display:none;align-items:center;justify-content:center;padding:26px}
+  .modalhost.on{display:flex}
+  .mbox{background:#fff;border-radius:18px;box-shadow:0 24px 64px rgba(16,24,40,.32);display:flex;flex-direction:column;overflow:hidden;animation:pop .17s ease;max-height:88vh}
+  @keyframes pop{from{transform:scale(.97) translateY(6px);opacity:.4}to{transform:none;opacity:1}}
+  .mbox.sm{width:480px;max-width:100%}
+  .mbox.lg{width:990px;max-width:100%;height:80vh}
+  .mhead{padding:20px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:13px}
+  .mhead .hic{width:40px;height:40px;border-radius:11px;background:var(--pf-bg);color:var(--pf);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .mhead .hic i{font-size:21px}
+  .mhead h3{font-size:17.5px;font-weight:600;margin:0}
+  .mhead p{font-size:12.5px;color:var(--ink-3);margin:4px 0 0;line-height:1.5}
+  .mhead .x{margin-left:auto;border:0;background:transparent;font-size:23px;color:var(--ink-3);cursor:pointer;line-height:1;padding:0 2px}
+  .mbody{padding:20px 24px;overflow:auto;flex:1}
+  .mfoot{padding:15px 24px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;background:var(--panel-2)}
+  .mfoot .grow{flex:1}
+  .fld label{display:block;font-size:12.5px;font-weight:600;margin-bottom:8px}
+  .fld input[type=text]{width:100%;border:1px solid var(--line-2);border-radius:11px;padding:13px 14px;font:inherit;font-size:14.5px}
+  .fld input[type=text]:focus{outline:0;border-color:var(--pf);box-shadow:0 0 0 3px rgba(107,95,208,.13)}
+  .fld input.err{border-color:var(--red)}
+  .hint{font-size:12px;color:var(--ink-3);margin-top:10px;display:flex;align-items:flex-start;gap:7px;line-height:1.5}
+  .hint i{font-size:14px;margin-top:1px;color:var(--pf)}
+  .errmsg{font-size:12px;color:var(--red);margin-top:8px;display:none;align-items:center;gap:6px}
+  .errmsg.on{display:flex}
+  .sugrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+  .sugchip{border:1px solid var(--line-2);background:#fff;border-radius:16px;padding:6px 12px;font-size:12px;color:var(--ink-2);cursor:pointer}
+  .sugchip:hover{border-color:var(--pf-bd);color:var(--pf);background:var(--pf-hover)}
+
+  .btn{font:inherit;font-size:13.5px;border-radius:11px;padding:11px 18px;cursor:pointer;border:1px solid var(--line-2);background:#fff;color:var(--ink);display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{background:#fafbfc}
+  .btn.pf{background:var(--pf);border-color:var(--pf);color:#fff}.btn.pf:hover{background:#5d51c2}
+  .btn.pf[disabled]{opacity:.45;cursor:not-allowed}
+  .btn.green{background:var(--primary);border-color:var(--primary);color:#fff}.btn.green:hover{background:var(--primary-h)}
+  .btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+  .btn.sm{padding:8px 13px;font-size:12.5px;border-radius:9px}
+
+  .alloctools{display:flex;align-items:center;gap:10px;padding:0 0 14px;flex-wrap:wrap}
+  .asearch{position:relative;flex:1;min-width:220px;max-width:330px}
+  .asearch i{position:absolute;left:12px;top:11px;color:var(--ink-3);font-size:16px}
+  .asearch input{width:100%;border:1px solid var(--line-2);border-radius:10px;padding:10px 12px 10px 35px;font:inherit;font-size:13px}
+  .asearch input:focus{outline:0;border-color:var(--pf)}
+  .fchip{border:1px solid var(--line-2);background:#fff;border-radius:16px;padding:7px 13px;font-size:12.5px;color:var(--ink-2);cursor:pointer}
+  .fchip.on{background:var(--pf-bg);border-color:var(--pf-bd);color:var(--pf);font-weight:500}
+  .bulkbar{display:flex;align-items:center;gap:10px;background:var(--pf-bg);border:1px solid var(--pf-bd);border-radius:10px;padding:9px 13px;margin-bottom:12px;font-size:12.5px;color:var(--pf)}
+  .bulkbar .grow{flex:1}
+  .bulkbar select{font:inherit;font-size:12.5px;border:1px solid var(--pf-bd);border-radius:8px;padding:6px 9px;background:#fff;color:var(--ink)}
+  .alist{border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  /* name-modal option row */
+  .optrow{display:flex;align-items:flex-start;gap:11px;margin-top:16px;padding:12px 13px;border:1px solid var(--line-2);border-radius:var(--r);cursor:pointer;user-select:none;transition:border-color .12s,background .12s}
+  .optrow:hover{border-color:var(--pf-bd);background:var(--pf-hover)}
+  .optxt{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--ink)}
+  .optxt small{color:var(--ink-3);font-size:12px;line-height:1.45}
+  /* current-portfolio chip in the picker */
+  .pfchip2{display:inline-flex;align-items:center;gap:6px;border-radius:6px;font-size:11.5px;padding:3px 9px;font-weight:500;white-space:nowrap}
+  .movetag{margin-left:8px;font-size:11px;color:var(--green);font-weight:600;white-space:nowrap}
+  .stealrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .stealrow:last-of-type{border-bottom:0}
+  .stealn{font-size:12.5px;color:var(--ink-2)}
+  .arow-dd{grid-template-columns:52px 1fr 110px 235px !important}
+  .arow{display:grid;grid-template-columns:42px 52px 1fr 110px 215px;align-items:center;border-bottom:1px solid #f1f2f5;transition:background .1s;cursor:pointer}
+  .arow:last-child{border-bottom:0}
+  .arow:hover{background:#fafbfc}
+  .arow.sel{background:var(--pf-hover);box-shadow:inset 3px 0 0 var(--pf)}
+  .arow > div{padding:11px 12px;font-size:12.5px;display:flex;align-items:center}
+  .arow.ahead > div{background:#fafbfc;border-bottom:1px solid var(--line);font-size:11px;color:var(--ink-3);font-weight:500;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px}
+  .cbx{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line-2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;cursor:pointer;flex:0 0 auto;background:#fff}
+  .arow.sel .cbx,.cbx.on{background:var(--pf);border-color:var(--pf)}
+  .athumb{width:34px;height:34px;border-radius:7px;overflow:hidden;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}
+  .aname{line-height:1.3;min-width:0}
+  .aname .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .aname .s{font-size:10.5px;color:var(--ink-3);margin-top:3px}
+  .statepill{display:inline-flex;align-items:center;gap:5px;font-size:11px;border-radius:6px;padding:3px 8px}
+  .statepill.act{background:#e9f7ef;color:#1f8a4c}
+  .statepill.pau{background:#f1f2f5;color:var(--ink-3)}
+  .pfselect{width:100%;font:inherit;font-size:12.5px;border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;background:#fff;cursor:pointer}
+  .pfselect:focus{outline:0;border-color:var(--pf)}
+  .aempty{padding:40px;text-align:center;color:var(--ink-3);font-size:13px}
+  .aempty i{font-size:24px;display:block;margin-bottom:9px}
+  .acount{font-size:12.5px;color:var(--ink-2)}.acount b{color:var(--ink)}
+  .warnbox{background:#fdf3e6;border:1px solid #f3d9b0;color:#8a5a12;border-radius:11px;padding:13px 15px;font-size:12.5px;line-height:1.55;display:flex;gap:10px}
+  .warnbox i{font-size:18px;flex:0 0 auto;margin-top:1px}
+
+  .toast{position:fixed;left:50%;top:22px;transform:translateX(-50%) translateY(-20px);background:#111318;color:#fff;font-size:13px;padding:12px 16px;border-radius:11px;display:flex;align-items:center;gap:12px;opacity:0;pointer-events:none;transition:.2s;z-index:130;max-width:92vw}
+  .toast.on{opacity:1;transform:translateX(-50%);pointer-events:auto}
+  .toast{z-index:200}
+  /* right-side strategy panel */
+  .spanel{position:fixed;top:0;right:0;height:100vh;width:460px;max-width:94vw;background:#fff;z-index:90;
+    box-shadow:-8px 0 32px rgba(16,24,40,.16);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s ease}
+  .spanel.on{transform:none}
+  .spanel .sp-head{padding:18px 22px;border-bottom:1px solid var(--line-2);display:flex;align-items:flex-start;gap:12px}
+  .spanel .sp-head h3{margin:0;font-size:17px;font-weight:600}
+  .spanel .sp-head p{margin:4px 0 0;font-size:12.5px;color:var(--ink-3);line-height:1.5}
+  .spanel .sp-head .x{margin-left:auto;border:0;background:transparent;font-size:23px;color:var(--ink-3);cursor:pointer;line-height:1}
+  .spanel .sp-body{flex:1;overflow:auto;padding:22px}
+  .spanel .sp-foot{padding:15px 22px;border-top:1px solid var(--line-2);display:flex;gap:10px;align-items:center;background:var(--panel-2)}
+  .sp-ph{border:1px dashed var(--line-2);border-radius:var(--r);background:var(--panel);padding:34px 20px;text-align:center;color:var(--ink-3);font-size:13px;line-height:1.6}
+  .sp-ph i{font-size:24px;display:block;margin-bottom:10px;color:var(--pf)}
+  .toast i.ok{color:#5fd08a;font-size:17px}
+  .toast button{font:inherit;font-size:12.5px;background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;padding:5px 11px;cursor:pointer}
+  .toast button:hover{background:rgba(255,255,255,.12)}
+
+  .demo{position:fixed;right:20px;bottom:20px;z-index:75;background:#fff;border:1px solid var(--line-2);border-radius:14px;box-shadow:0 10px 34px rgba(16,24,40,.16);padding:12px 14px;width:252px}
+  .demo .dh{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;gap:7px;margin-bottom:10px}
+  .demo .dh i{color:var(--pf);font-size:14px}
+  .demo .drow{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-2);margin-bottom:9px}
+  .demo .drow:last-child{margin-bottom:0}
+  .dsw{width:38px;height:21px;border-radius:11px;background:#d5d9e0;position:relative;cursor:pointer;flex:0 0 auto;transition:background .15s}
+  .dsw::after{content:"";position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .dsw.on{background:var(--green)}.dsw.on::after{left:19.5px}
+  .demo .reset{font-size:12px;color:var(--pf);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+
+  @media(max-width:1000px){.cards{grid-template-columns:1fr}.setcard{border-right:0;border-bottom:1px solid var(--line)}.setcard:last-child{border-bottom:0}.setcard.on{border-radius:0}
+    .main{padding:16px 16px 46px}.mbox.lg{width:100%;height:88vh}
+    .arow{grid-template-columns:38px 0 1fr 0 175px}.arow .athumb,.arow .statecell{display:none}
+    .pcreate{margin-left:0}}
+  @media(max-width:640px){.app{grid-template-columns:48px 1fr}.h-title{font-size:17px;width:100%}.demo{left:16px;right:16px;width:auto}.plabel{display:none}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.31.0/tabler-icons.min.css">
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="scrim" id="scrim"></div>
+<div class="modalhost" id="modalhost"></div>
+<div class="toast" id="toast"></div>
+<div class="demo" id="demo"></div>
+<div class="tt" id="tt"></div>
+<div class="spanel" id="spanel"></div>
+
+<script>
+/* ===================== SVGs ===================== */
+function usFlagSVG(w){const h=Math.round(w*0.66),sh=h/13;let st="";
+  for(let i=0;i<13;i++)if(i%2===0)st+=`<rect y="${(i*sh).toFixed(2)}" width="${w}" height="${(sh+0.3).toFixed(2)}" fill="#b22234"/>`;
+  const cw=w*0.42,ch=sh*7;let stars="";
+  for(let r=0;r<4;r++)for(let c=0;c<5;c++)if((r+c)%2===0)stars+=`<circle cx="${(cw/5*(c+0.5)).toFixed(2)}" cy="${(ch/4*(r+0.5)).toFixed(2)}" r="0.5" fill="#fff"/>`;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="border-radius:2px;display:block;box-shadow:0 0 0 1px rgba(0,0,0,.07)"><rect width="${w}" height="${h}" fill="#fff"/>${st}<rect width="${cw}" height="${ch}" fill="#3c3b6e"/>${stars}</svg>`;}
+const FLAG=usFlagSVG(18);
+function spk(c="var(--purple)",s=14){return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${c}" style="flex:0 0 auto"><path d="M12 2.5c.55 4.9 3.6 7.95 8.5 8.5-4.9.55-7.95 3.6-8.5 8.5-.55-4.9-3.6-7.95-8.5-8.5C8.4 10.45 11.45 7.4 12 2.5z"/></svg>`;}
+const WAVES=`<svg width="15" height="10" viewBox="0 0 24 16" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"><path d="M2 5c3-3 6-3 9 0s6 3 9 0"/><path d="M2 11c3-3 6-3 9 0s6 3 9 0"/></svg>`;
+const AMZ=`<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 16c4.5 3 11 3 15.5 0" stroke="#ff9900" stroke-width="2" stroke-linecap="round"/><path d="M18 15.5c1 .3 1.6 1 1.4 2.4" stroke="#ff9900" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+const THUMBS={
+  Blackstone:`<svg viewBox="0 0 36 36" width="100%" height="100%"><rect width="36" height="36" fill="#2b2f36"/><rect x="7" y="14" width="22" height="9" rx="2" fill="#3d434c"/><g stroke="#7c828c" stroke-width="1.2"><line x1="10" y1="16" x2="10" y2="21"/><line x1="14" y1="16" x2="14" y2="21"/><line x1="18" y1="16" x2="18" y2="21"/><line x1="22" y1="16" x2="22" y2="21"/><line x1="26" y1="16" x2="26" y2="21"/></g><line x1="18" y1="23" x2="18" y2="28" stroke="#3d434c" stroke-width="2"/></svg>`,
+  "Liner Guys":`<svg viewBox="0 0 36 36" width="100%" height="100%"><rect width="36" height="36" fill="#e8f0fb"/><rect x="9" y="9" width="18" height="18" rx="9" fill="none" stroke="#4a7fd0" stroke-width="3"/><rect x="15" y="15" width="6" height="6" rx="3" fill="#4a7fd0"/></svg>`,
+  Simpson:`<svg viewBox="0 0 36 36" width="100%" height="100%"><rect width="36" height="36" fill="#eceef1"/><path d="M13 10h4v12h8v4H13z" fill="#9199a4"/></svg>`,
+  Folex:`<svg viewBox="0 0 36 36" width="100%" height="100%"><rect width="36" height="36" fill="#f2eef8"/><rect x="13" y="8" width="10" height="20" rx="2" fill="#8d7bc0"/><rect x="15" y="4" width="6" height="5" rx="1" fill="#6f5da8"/></svg>`,
+};
+const thumb=b=>THUMBS[b]||`<svg viewBox="0 0 36 36" width="100%" height="100%"><rect width="36" height="36" fill="#eef1f5"/></svg>`;
+
+/* ===================== data ===================== */
+const PALETTE=[
+  {dot:"#6b5fd0",txt:"#584fc0",bg:"#eeecfb",bd:"#d9d5f7"},
+  {dot:"#2f6bf3",txt:"#245bd6",bg:"#eaf1fe",bd:"#cdddff"},
+  {dot:"#1f9d8b",txt:"#177b6d",bg:"#e6f6f3",bd:"#c4ece5"},
+  {dot:"#e08a2e",txt:"#b56a12",bg:"#fef4e7",bd:"#f3d9b0"},
+  {dot:"#d6456b",txt:"#b02c50",bg:"#fdeef1",bd:"#f6d6de"},
+];
+const GRAY={dot:"#9aa0ab",txt:"#5b626c",bg:"#f1f2f5",bd:"#e2e4ea"};
+const NOPF="__none";
+const NONE_PF={id:NOPF,name:"Not in a portfolio",none:true,color:{dot:"#e08a2e",txt:"#8f710a",bg:"#faebb7",bd:"#e8d391"}};
+const LABEL="portfolio",LABEL_C="Portfolio",DEFAULT_NAME="Standard";
+
+const PRODUCTS=[
+  {name:"Blackstone 2310 Iron Forged 36",asin:"B0CWCL4Y7F",brand:"Blackstone",budget:476,mult:2.0,m:6,mp:29.8,np:896,rev:4,cur:3,curd:8,active:true,campaigns:3},
+  {name:"Blackstone Griddle Hard Cover 36",asin:"B0BQ8K2P4X",brand:"Blackstone",budget:300,mult:1.5,m:9,mp:22.1,np:410,rev:3,cur:5,curd:4,active:true,campaigns:2},
+  {name:"Blackstone Grill Tool Kit 5-Piece",asin:"B07YSFRT21",brand:"Blackstone",budget:184,mult:1.2,m:11,mp:16.4,np:210,rev:2,cur:6,curd:3,active:false,campaigns:1},
+  {name:"THE LINER GUYS 20 Mil Crawl Sp",asin:"B0G3YTV85L",brand:"Liner Guys",budget:591,mult:2.5,m:13,mp:47.9,np:34,rev:0,cur:12,curd:23,active:true,campaigns:2},
+  {name:"THE LINER GUYS Vapor Barrier Kit",asin:"B0G7QW11ZK",brand:"Liner Guys",budget:283,mult:1.8,m:11,mp:33.4,np:120,rev:2,cur:9,curd:11,active:true,campaigns:2},
+  {name:"Simpson StrongTie ABA66Z ABA Z",asin:"B012GX4Q58",brand:"Simpson",budget:133,mult:2.0,m:8,mp:12.3,np:0,rev:0,cur:16,curd:9,active:true,campaigns:1},
+  {name:"Simpson StrongTie Joist Hanger",asin:"B004K2N9QG",brand:"Simpson",budget:210,mult:1.3,m:10,mp:18.6,np:64,rev:1,cur:7,curd:5,active:true,campaigns:2},
+  {name:"Simpson StrongTie Deck Screw 5lb",asin:"B01N2XKPZ9",brand:"Simpson",budget:96,mult:1.1,m:7,mp:9.2,np:41,rev:1,cur:4,curd:2,active:false,campaigns:1},
+  {name:"FOLEX Professional Carpet Clea",asin:"B004D92G10",brand:"Folex",budget:242,mult:1.6,m:12,mp:24.7,np:301,rev:3,cur:8,curd:6,active:true,campaigns:2,isNew:true},
+  {name:"FOLEX Instant Spot Remover 32oz",asin:"B000BQY5A0",brand:"Folex",budget:158,mult:1.4,m:10,mp:14.9,np:150,rev:2,cur:5,curd:4,active:true,campaigns:1,isNew:true},
+];
+const BRANDS=["All","Blackstone","Liner Guys","Simpson","Folex"];
+const NAME_SUGGESTIONS=["Blackstone · grills","New launches","Simpson · core","Protect margin"];
+
+let featureOn=true;
+const DEFAULT_STRATEGY={mode:"Variable",pct:"2%"};
+/* bounded week window: 10 past + current + 10 future (no infinite scroll) */
+const PAST_W=10,FUT_W=10,NOWI=PAST_W,NW=PAST_W+1+FUT_W;
+const WEEKS=(()=>{const a=new Date(2026,6,27),out=[];      /* Monday of the current week */
+  for(let k=-PAST_W;k<=FUT_W;k++){const d=new Date(a);d.setDate(d.getDate()+k*7);
+    out.push(d.toLocaleDateString("en-GB",{day:"2-digit",month:"short"}));}
+  return out;})();
+let sseq=0;
+const newStrat=(from,to)=>({id:"st"+(++sseq),mode:"Variable",pct:"2%",from,to});
+const stratsOf=p=>(p&&p.strategies)||[];
+const segAt=(p,i)=>stratsOf(p).find(g=>i>=g.from&&i<g.to)||null;
+let portfolios=[{id:"default",name:DEFAULT_NAME,def:true,strategies:[newStrat(4,8),newStrat(8,NOWI+3)]}];
+let assign={};
+let view={screen:"sp",active:"default",ver:"v1"};
+let openMenu=null;                    // portfolio id whose ··· menu is open (strip or card)
+let modal=null;
+let allocState={q:"",brand:"All",sel:new Set(),focusPf:null};
+let lastMove=null,seq=0;
+
+const app=document.getElementById("app"),host=document.getElementById("modalhost"),
+      scrim=document.getElementById("scrim"),toastEl=document.getElementById("toast"),demoEl=document.getElementById("demo");
+const usd=n=>"$"+Math.round(n).toLocaleString();
+const colorOf=p=>p.def?GRAY:p.color;
+const pfOf=i=>assign[i]||"default";
+const productsOf=id=>PRODUCTS.map((p,i)=>({p,i})).filter(x=>pfOf(x.i)===id);
+const findPf=id=>id===NOPF?NONE_PF:(portfolios.find(p=>p.id===id)||portfolios[0]);
+const activePf=()=>findPf(view.active);
+const multi=()=>portfolios.length>1;
+const hasStrategy=p=>stratsOf(p).length>0;
+function stats(id){const r=productsOf(id);return{n:r.length,budget:r.reduce((t,x)=>t+x.p.budget,0),
+  campaigns:r.reduce((t,x)=>t+x.p.campaigns,0),isNew:r.filter(x=>x.p.isNew).length};}
+/* deterministic per-portfolio weekly series: allocated vs utilised */
+function series(id){
+  const s=stats(id);if(!s.budget)return null;
+  const seed=[...id].reduce((a,c)=>a+c.charCodeAt(0),0);
+  const out=[];for(let w=0;w<8;w++){
+    const wob=0.82+((Math.sin(seed+w*1.7)+1)/2)*0.38;
+    const alloc=Math.round(s.budget*wob);
+    const rate=0.52+((Math.sin(seed*1.3+w*2.1)+1)/2)*0.46;
+    out.push({alloc,used:Math.round(alloc*Math.min(1.04,rate))});}
+  return out;
+}
+
+/* ===================== chrome ===================== */
+function rail(){return `<div class="rail"><div class="avatar">A</div>
+  <i class="ti ti-home"></i><i class="ti ti-box"></i><i class="ti ti-clipboard-list"></i><i class="ti ti-settings active-i"></i>
+  <div class="spacer"></div><i class="ti ti-user-plus"></i><i class="ti ti-books"></i><i class="ti ti-chart-bar"></i></div>`;}
+function header(){return `<div class="topbar"><div class="h-title">PPC Management</div>
+  <span class="selector"><i class="ti ti-shopping-cart"></i>MaxWareh…<span class="badge">1</span><i class="ti ti-chevron-down"></i></span>
+  <span class="selector">${FLAG}us<span class="badge">1</span><i class="ti ti-chevron-down"></i></span></div>`;}
+function nav2(){return `<div class="nav2"><a><i class="ti ti-circle-percentage"></i>Performance</a><a><i class="ti ti-sparkles"></i>Strategic</a><a class="on"><i class="ti ti-settings"></i>Bid &amp; Budget Settings</a></div>`;}
+function cardsBlock(){return `<div class="cardswrap">
+  <div class="pause"><button class="tip" data-tip="Temporarily stop automatic budget and bid changes."><i class="ti ti-player-pause"></i>Pause budget &amp; bidding automation</button></div>
+  <div class="cards">
+    <div class="setcard"><div class="r1"><i class="ti ti-adjustments-horizontal"></i>Global Bidding Rules</div><p>Define default bidding rules for SP and SB campaigns</p></div>
+    <div class="setcard on"><div class="r1"><i class="ti ti-cube"></i>Sponsored Product settings</div><p>Manage budget pacing and adjust bids at product level</p></div>
+    <div class="setcard"><div class="r1"><i class="ti ti-briefcase-2"></i>Sponsored Brand settings</div><p>Manage budgets and adjust bids at the SB campaign level</p></div>
+  </div></div><div class="uline"></div>`;}
+
+/* ===================== PORTFOLIO STRIP ===================== */
+function portfolioStrip(){
+  if(!featureOn)return "";
+  if(!multi())return "";            /* single default portfolio -> no strip, no note */
+  const single=false;
+  const pills=portfolios.map(p=>{
+    const c=colorOf(p),on=p.id===view.active,s=stats(p.id);
+    const lead=p.def?`<i class="ti ti-inbox lead"></i>`:`<span class="sdot" style="background:${c.dot}"></span>`;
+    const sub=single?`<span class="sub">· all products</span>`:"";
+    const dots=on?`<button class="pdots" data-menu="${p.id}" title="Edit or delete">···</button>`:"";
+    const nb=(!on&&s.isNew)?`<span class="pnew">${s.isNew}</span>`:"";
+    return `<div class="ppill ${on?'on':''}" data-pick="${p.id}">${lead}<span class="nm">${p.name}</span>${sub}${nb}${dots}
+      ${openMenu===p.id?pfMenu(p):""}</div>`;}).join("");
+  return `<div class="pstrip">
+      <button class="pgridbtn ${view.screen==='manage'?'on':''} tip" id="gridbtn" data-tip="See all ${LABEL}s side by side"><i class="ti ti-layout-list"></i></button>
+      <span class="pdiv"></span><span class="plabel">${LABEL_C.toUpperCase()}</span>
+      <div class="ppills">${pills}</div>
+      <button class="pcreate" data-act="create"><i class="ti ti-plus"></i>Create${single?" "+LABEL:""}</button>
+    </div>
+    ${single?`<div class="stripnote"><i class="ti ti-inbox"></i><span>Everything sits in <b>${DEFAULT_NAME}</b> — the same view as today. New products auto-join ${DEFAULT_NAME}.</span></div>`:""}`;
+}
+function pfMenu(p){
+  if(p.def)return `<div class="pmenu on" style="left:0">
+    <div class="pmi" data-alloc="${p.id}"><i class="ti ti-package"></i>Products<span class="hint">move in / out</span></div>
+    <div class="pmsep"></div>
+    <div class="pmi" style="color:var(--ink-3);cursor:default"><i class="ti ti-lock"></i>Default — can’t rename or delete</div></div>`;
+  return `<div class="pmenu on" style="left:0">
+    <div class="pmi" data-edit="${p.id}"><i class="ti ti-pencil"></i>Edit<span class="hint">rename &amp; products</span></div>
+    <div class="pmsep"></div>
+    <div class="pmi danger" data-del="${p.id}"><i class="ti ti-trash"></i>Delete</div></div>`;
+}
+
+/* ===================== timeline / no-data ===================== */
+function weekData(pf){
+  const st=stats(pf.id),base=st.budget||2600,seed=[...pf.id].reduce((a,c)=>a+c.charCodeAt(0),0);
+  const out=[];
+  for(let i=0;i<NW;i++){
+    const seg=segAt(pf,i);
+    if(!seg||i>NOWI){out.push(null);continue;}          /* future = strategy not applied yet */
+    const w=0.78+((Math.sin(seed+i*1.7)+1)/2)*0.5;
+    const avail=Math.round(base*w);
+    const spend=Math.round(avail*(0.42+((Math.sin(seed*1.3+i*2.1)+1)/2)*0.52));
+    out.push({avail,spend,ratio:spend/avail,
+      prods:Math.max(1,Math.round((st.n||6)*(0.65+((Math.sin(seed+i*1.1)+1)/2)*0.45)))});
+  }
+  return out;
+}
+function tlLine(vals,key,color,o={}){
+  const H=58,padT=22,padB=14,pts=[];
+  vals.forEach((v,i)=>{if(v)pts.push([(i+0.5)/NW*100,v[key]]);});
+  if(!pts.length)return `<div class="linewrap" style="height:${H}px"></div>`;
+  const ns=pts.map(p=>p[1]),mn=Math.min(...ns,0),mx=Math.max(...ns,1);
+  const yOf=v=>H-padB-((v-mn)/((mx-mn)||1))*(H-padT-padB);
+  let segs="";
+  for(let k=0;k<pts.length-1;k++)
+    segs+=`<line x1="${pts[k][0]}%" y1="${yOf(pts[k][1]).toFixed(1)}" x2="${pts[k+1][0]}%" y2="${yOf(pts[k+1][1]).toFixed(1)}" stroke="${color}" stroke-width="2"/>`;
+  const dots=pts.map(p=>`<circle cx="${p[0]}%" cy="${yOf(p[1]).toFixed(1)}" r="3.2" fill="${color}" stroke="${color}" stroke-width="2"/>`).join("");
+  const labs=pts.map(p=>`<span class="ptlab" style="left:${p[0]}%;top:${(yOf(p[1])-15).toFixed(1)}px;color:${color};transform:translateX(-50%)">${p[1].toLocaleString()}</span>`).join("");
+  return `<div class="linewrap" style="height:${H}px">
+    <svg width="100%" height="${H}" style="display:block;position:absolute;inset:0;overflow:visible">${segs}${dots}</svg>${labs}</div>`;
+}
+function timeline(pfArg,ro){
+  const pf=pfArg||activePf(),data=weekData(pf),readOnly=!!ro;
+  const cell=i=>`<div class="wc ${i===NOWI?'now':''} ${i<NOWI?'past':''}"></div>`;
+  /* --- strategy row: strips span their week range; free weeks are hover targets --- */
+  let sr="",i=0;
+  while(i<NW){
+    const seg=segAt(pf,i);
+    if(seg&&seg.from===i){
+      const past=seg.to<=NOWI, span=`grid-column:${i+2} / ${Math.min(seg.to,NW)+2}`;
+      sr+=`<div class="sstrip ${past?'ro':''}" style="${span}" data-seg="${seg.id}">
+        <span class="vchip"><i class="ti ti-wave-sine"></i>${seg.mode}</span><span class="vpct">${seg.pct}</span>
+        ${(!past&&!readOnly)?`<span class="sacts">
+            <button class="sact" data-sedit="${seg.id}" title="Edit strategy"><i class="ti ti-pencil"></i></button>
+            <button class="sact del" data-sdel="${seg.id}" title="Delete strategy"><i class="ti ti-trash"></i></button></span>`:''}
+      </div>`;
+      i=Math.min(seg.to,NW);
+    } else if(seg){ i++; }
+    else {
+      sr+=`<div class="wc sfree ${i===NOWI?'now':''} ${i<NOWI?'past':''}" data-wk="${i}" style="grid-column:${i+2}">
+        ${(i>=NOWI&&!readOnly)?`<button class="mkstrat" data-mkstrat="${i}"><i class="ti ti-plus"></i><span>Create<br>strategy</span></button>`:''}</div>`;
+      i++;
+    }
+  }
+  const sat=data.map((d,i)=>`<div class="wc ${i===NOWI?'now':''}">${d?`<span class="sdotx" style="background:${d.ratio>0.9?'var(--green)':d.ratio>0.6?'var(--amber)':'var(--red)'}"></span>`:''}</div>`).join("");
+  const pa=data.map((d,i)=>{
+    if(!d)return `<div class="wc ${i===NOWI?'now':''}"></div>`;
+    const prev=i>0&&data[i-1]?data[i-1].prods:null,dv=prev===null?null:d.prods-prev;
+    return `<div class="wc ${i===NOWI?'now':''}"><b>${d.prods}</b>${dv===null?'':`<span class="d" style="color:${dv>0?'var(--green)':dv<0?'var(--red)':'var(--ink-3)'}">${dv>0?'+'+dv:dv===0?'=':dv}</span>`}</div>`;}).join("");
+  const heads=WEEKS.map((w,i)=>`<div class="wc hd ${i===NOWI?'now':''}">${w}</div>`).join("");
+  const overlay=WEEKS.map((_,i)=>`<div class="ov ${i===NOWI?'now':''} ${i<NOWI?'past':''}" data-ovc="${i}" style="grid-column:${i+2}"></div>`).join("");
+  return `<div class="scrollx tlscroll"><div class="tl ${readOnly?'ro':''}" style="--nw:${NW}">
+    <div class="ovlay">${overlay}</div>
+    <div class="tlrow"><div class="lab"></div>${heads}</div>
+    <div class="tlrow srow"><div class="lab">Strategy</div>${sr}</div>
+    <div class="tlrow"><div class="lab">Weekly budget<br>available (in $)</div><div class="area">${tlLine(data,"avail","var(--blue-line)")}</div></div>
+    <div class="tlrow"><div class="lab">Spend (in $)</div><div class="area">${tlLine(data,"spend","var(--purple)")}</div></div>
+    <div class="tlrow"><div class="lab">Budget saturation</div>${sat}</div>
+    <div class="tlrow"><div class="lab">Products activated</div>${pa}</div>
+  </div></div>`;
+}
+function noStrategyBlock(pfArg){
+  const pf=pfArg||activePf(),st=stats(pf.id);
+  return `<div class="nodata"><div class="ic"><i class="ti ti-wave-sine"></i></div>
+    <h4>No budget strategy configured for \u201c${pf.name}\u201d</h4>
+    <p>A strategy tells Omny <b>how much to spend</b> on ads and bidding for this ${LABEL}.
+       Adding products alone doesn\u2019t create one \u2014 configure a strategy to start pacing budget and see this timeline.</p>
+    <div class="steps">
+      <span class="nstep"><i class="ti ti-package"></i>${st.n?`<b>${st.n}</b>&nbsp;product${st.n===1?'':'s'} in this ${LABEL}`:'No products yet'}</span>
+      <span class="nstep"><i class="ti ti-wave-sine"></i>Strategy <b>not set</b></span>
+    </div>
+    <button class="btn pf" data-strat="new" style="margin-top:16px"><i class="ti ti-plus"></i>Create strategy</button></div>`;
+}
+function noHistoryBlock(pfArg){
+  const pf=pfArg||activePf(),s=stats(pf.id);
+  return `<div class="nodata"><div class="ic"><i class="ti ti-chart-histogram"></i></div>
+    <h4>No weekly history for “${pf.name}” yet</h4>
+    <p>This chart tracks <b>budget allocated vs. budget used</b>, week by week. It appears once this ${LABEL} has completed its first week of spend.</p>
+    <div class="steps">
+      <span class="nstep"><i class="ti ti-package"></i>${s.n?`<b>${s.n}</b>&nbsp;product${s.n===1?'':'s'} added`:'Add products'}</span>
+      <span class="nstep"><i class="ti ti-coin"></i>Budget <b>${usd(s.budget)}</b>/wk set below</span>
+      <span class="nstep"><i class="ti ti-clock"></i>First data <b>next week</b></span>
+    </div></div>`;
+}
+
+/* ===================== allocation table ===================== */
+function table(){
+  const pf=activePf(),rows=productsOf(pf.id),s=stats(pf.id),c=colorOf(pf);
+  const showChips=featureOn&&multi()&&pf.def;
+  let inner;
+  if(!rows.length){
+    inner=`<div class="empty-t"><i class="ti ti-package-off big"></i>
+      ${pf.def?`<b>Every product has been moved into another ${LABEL}.</b><div style="margin-top:6px">New products added to your catalog will land here automatically.</div>`
+              :`<b>No products in “${pf.name}” yet.</b><div style="margin-top:6px">Add products to start allocating budget to this ${LABEL}.</div>
+                <button class="btn-inline" data-alloc="${pf.id}"><i class="ti ti-plus"></i>Add products</button>`}</div>`;
+  } else {
+    const totPerf=rows.reduce((t,x)=>t+x.p.budget,0),totDisc=rows.reduce((t,x)=>t+Math.round(x.p.budget*0.4),0);
+    const body=rows.map(({p,i})=>{const perf=p.budget,disc=Math.round(p.budget*0.4),ipf=findPf(pfOf(i)),ic=colorOf(ipf);
+      return `<div><i class="ti ti-ban ic"></i></div>
+        <div><span class="gtoggle ${p.active?'':'off'}"></span></div><div>${AMZ}</div>
+        <div class="pgrp"><span class="pthumb">${thumb(p.brand)}</span><div class="pname">${p.name} - ${p.asin}
+          <div class="meta">${FLAG} <i class="ti ti-git-branch" style="font-size:12px"></i>${p.campaigns}</div>
+          ${showChips?`<span class="pfchip" style="background:${ic.bg};color:${ic.txt}">${ipf.def?'<i class="ti ti-inbox" style="font-size:11px"></i>':`<span class="sdot" style="background:${ic.dot}"></span>`}${ipf.name}</span>`:''}</div></div>
+        <div class="num">${usd(p.np)}</div><div class="num">${p.rev}%</div>
+        <div class="num col2 orange-l"><b>${p.m}%</b><span class="sub2">$${p.mp}</span></div>
+        <div class="num"><span class="mult">x${p.mult.toFixed(1)}</span></div>
+        <div class="num col2 orange-r"><span style="color:${p.cur>=16?'var(--red)':'var(--ink)'};font-weight:600">${p.cur}%</span><span class="sub2"><i class="ti ti-chevron-down" style="font-size:11px"></i> ${p.curd}%</span></div>
+        <div class="col-perf num"><span style="display:inline-flex;align-items:center;gap:5px">${spk()}<span class="amt">${usd(perf)}</span></span></div>
+        <div class="col-perf num"><span class="circ"></span>&nbsp;100%</div>
+        <div class="col-perf col2"><span class="sub2"><i class="ti ti-copy" style="font-size:12px"></i>${usd(Math.round(perf*0.4))}</span><span style="color:var(--green);font-size:11.5px;font-weight:600">+${usd(Math.round(perf*0.6))}</span></div>
+        <div class="num"><span style="display:inline-flex;align-items:center;gap:5px">${spk()}<span class="amt">${usd(disc)}</span></span></div>
+        <div class="num"><span class="circ"></span>&nbsp;&gt;100%</div>
+        <div class="col2"><span class="sub2"><i class="ti ti-copy" style="font-size:12px"></i>${usd(Math.round(disc*0.2))}</span><span style="color:var(--green);font-size:11.5px;font-weight:600">+${usd(Math.round(disc*0.3))}</span></div>`;}).join("");
+    inner=`<div class="pgrid grouprow"><div></div><div></div><div></div><div></div><div></div><div></div><div class="orange-l"></div><div></div><div class="orange-r"></div>
+        <div class="col-perf" style="grid-column:10 / 13;font-weight:600;color:var(--ink)">Performance Targeting</div>
+        <div style="grid-column:13 / 16;font-weight:600;color:var(--ink)">Discovery Targeting</div></div>
+      <div class="pgrid totalrow"><div style="grid-column:1 / 10;flex-direction:row;justify-content:flex-end;align-items:center;color:var(--ink-3)">Total&nbsp;<i class="ti ti-arrow-right" style="font-size:13px"></i></div>
+        <div class="num"><span class="amt">${usd(totPerf)}</span></div><div></div>
+        <div class="col2"><span class="cpy"><i class="ti ti-copy" style="font-size:12px"></i>${usd(Math.round(totPerf*0.06))}</span><span class="pos">+${usd(Math.round(totPerf*0.25))}</span></div>
+        <div class="num"><span class="amt">${usd(totDisc)}</span></div><div></div>
+        <div class="col2"><span class="cpy"><i class="ti ti-copy" style="font-size:12px"></i>${usd(Math.round(totDisc*0.02))}</span><span class="pos">+${usd(Math.round(totDisc*0.4))}</span></div></div>
+      <div class="pgrid headrow"><div><i class="ti ti-speakerphone" style="font-size:15px;color:var(--accent)"></i></div><div></div><div>${AMZ}</div><div>Product Groups</div>
+        <div class="num">Ads Net profit 4W</div><div class="num">4-Week Rev. Share</div><div class="num orange-l">Products Margin</div><div class="num">Bid Mult.</div><div class="num orange-r">Current · 4W</div>
+        <div class="col-perf num">Weekly Budget</div><div class="col-perf num">% of max spend pot.</div><div class="col-perf num">vs. last week spend</div>
+        <div class="num">Weekly Budget</div><div class="num">% of max spend pot.</div><div class="num">vs. last week spend</div></div>
+      <div class="pgrid">${body}</div>`;
+  }
+  const scoped=featureOn&&!pf.def;
+  return `<div class="tcard"><div class="alloc-h"><i class="ti ti-building-bank"></i><h2>Latest Budget Allocation per Product</h2>
+      <span class="grow"></span>
+      <button class="createstrat" type="button" data-manageprod="1"><i class="ti ti-package"></i>Manage products</button></div>
+    <p class="alloc-sub">Review the latest budget allocation results below and adjust as needed.
+      ${scoped?`<span style="display:inline-flex;align-items:center;gap:6px"><span class="sdot" style="background:${c.dot}"></span>Showing <b style="color:${c.txt}">${pf.name}</b> only</span>`:''}</p>
+    <div class="scrollx"><div class="ptable">
+      <div class="pgrid bannerrow"><div class="banner-amt"><b>${usd(s.budget)}</b>Total weekly budget allocated</div></div>
+      <div class="pgrid toolrow"><div class="tool-l"><div class="searchbox"><i class="ti ti-search"></i><input type="text" placeholder="Search…"></div></div>
+        <div class="tool-prio"><span class="prioritized"><i class="ti ti-arrow-guide"></i>Prioritized by</span></div>
+        <div class="tool-roas orange-l orange-r"><span class="toggle">ROAS <span class="sw"></span> ACOS</span></div>
+        <div class="col-perf"></div><div class="col-perf"></div><div class="col-perf"></div><div></div><div></div><div></div></div>
+      ${inner}</div></div></div>`;
+}
+
+/* ===================== MANAGE (cards + week graphs) ===================== */
+function miniChart(id,dot){
+  const data=series(id);
+  if(!data)return null;
+  const w=300,h=64,n=data.length,gap=7,bw=(w-gap*(n-1))/n;
+  const max=Math.max(...data.map(d=>d.alloc))||1;
+  let bars="";
+  data.forEach((d,i)=>{
+    const x=i*(bw+gap),ah=Math.max(3,(d.alloc/max)*(h-14)),uh=Math.max(2,(d.used/max)*(h-14));
+    bars+=`<rect x="${x.toFixed(1)}" y="${(h-ah).toFixed(1)}" width="${bw.toFixed(1)}" height="${ah.toFixed(1)}" rx="3" fill="${dot}" opacity="0.17"/>`;
+    bars+=`<rect x="${x.toFixed(1)}" y="${(h-uh).toFixed(1)}" width="${bw.toFixed(1)}" height="${uh.toFixed(1)}" rx="3" fill="${dot}"/>`;});
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="64" preserveAspectRatio="none" style="display:block">${bars}</svg>`;
+}
+function pfCardV1(p){
+  const c=colorOf(p),st=stats(p.id),data=series(p.id);
+  const used=data?data.reduce((t,x)=>t+x.used,0):0,alloc=data?data.reduce((t,x)=>t+x.alloc,0):0;
+  const util=alloc?Math.round(used/alloc*100):0,chart=miniChart(p.id,c.dot);
+  return `<div class="pcard" style="border-top-color:${c.dot}">
+    <div class="pc-head">
+      <div class="pc-name">${p.def?`<i class="ti ti-inbox" style="color:var(--ink-3);font-size:18px"></i>`:`<span class="sdot" style="background:${c.dot}"></span>`}
+        <span class="nm">${p.name}</span>${p.def?'<span class="systag">DEFAULT</span>':''}</div>
+      <div class="pc-menu"><button class="pc-dots" data-menu="${p.id}">···</button>${openMenu===p.id?pfMenu(p).replace('style="left:0"','style="right:0"'):''}</div>
+    </div>
+    <div class="pc-body">
+      <div class="pc-big">${usd(st.budget)}<small> /week</small></div>
+      <div class="pc-meta"><i class="ti ti-package"></i>${st.n} product${st.n===1?'':'s'} <span style="color:var(--line-2)">•</span>
+        <i class="ti ti-git-branch"></i>${st.campaigns} campaign${st.campaigns===1?'':'s'}${st.isNew?` <span class="pnew">${st.isNew} new</span>`:''}</div>
+    </div>
+    ${chart?`<div class="pc-chart">
+        <div class="pc-clab"><span class="k"><span class="sq" style="background:${c.dot};opacity:.22"></span>Allocated</span>
+          <span class="k"><span class="sq" style="background:${c.dot}"></span>Used</span>
+          <span style="margin-left:auto;text-transform:none;letter-spacing:0">last 8 weeks</span></div>
+        ${chart}</div>
+      <div class="pc-util"><span>Utilisation</span><span class="bar"><span style="width:${Math.min(100,util)}%;background:${c.dot}"></span></span><b>${util}%</b></div>`
+      :`<div class="pc-nodata"><i class="ti ti-chart-histogram"></i>No weekly data yet — appears after the first week of spend.</div>`}
+    <div class="pc-foot" data-open="${p.id}">Open ${LABEL} <i class="ti ti-arrow-right"></i></div>
+  </div>`;
+}
+function pfCardV2(p){
+  const c=colorOf(p),st=stats(p.id),strat=hasStrategy(p);
+  const lead=p.def?`<i class="ti ti-inbox" style="color:var(--ink-3);font-size:18px"></i>`
+                  :`<span class="sdot" style="background:${c.dot}"></span>`;
+  return `<div class="tcard mrow" style="border-top:3px solid ${c.dot}">
+    <div class="mhead2">
+      <div class="mid-1">
+        <span class="mname">${lead}${p.name}</span>
+        ${p.def?'<span class="systag">DEFAULT</span>':''}
+        ${strat?`<span class="stratchip"><i class="ti ti-wave-sine"></i>${stratsOf(p).length} strateg${stratsOf(p).length===1?'y':'ies'}${segAt(p,NOWI)?` · active`:''}</span>`
+               :`<span class="stratchip none"><i class="ti ti-alert-circle"></i>No strategy</span>`}
+        <span class="grow"></span>
+        <button class="createstrat" data-open="${p.id}">Open ${LABEL}<i class="ti ti-arrow-right"></i></button>
+      </div>
+      <div class="mid-2">
+        <span class="mkpi"><b style="color:${c.txt}">${usd(st.budget)}</b>/week</span>
+        <span class="msep">•</span><span class="mkpi"><i class="ti ti-package"></i>${st.n} product${st.n===1?'':'s'}</span>
+        <span class="msep">•</span><span class="mkpi"><i class="ti ti-git-branch"></i>${st.campaigns} campaign${st.campaigns===1?'':'s'}</span>
+        ${st.isNew?`<span class="pnew">${st.isNew} new</span>`:''}
+      </div>
+    </div>
+    <div class="nohover">${timeline(p,true)}</div>
+  </div>`;
+}
+function manageView(){
+  const v2=view.ver==="v2";
+  const cards=portfolios.map(p=>v2?pfCardV2(p):pfCardV1(p)).join("");
+  const body=v2?`<div class="mstack">${cards}</div>`
+    :`<div class="cardgrid">${cards}
+        <div class="pcard add" data-act="create"><span class="plus"><i class="ti ti-plus"></i></span>Create ${LABEL}
+          <small>Group products to budget for them separately</small></div></div>`;
+  return `<div class="mv-top"><h2><i class="ti ti-layout-list"></i>All ${LABEL}s</h2><span class="grow"></span>
+      <button class="createstrat" type="button" data-manageall="1"><i class="ti ti-package"></i>Manage products</button>
+      <button class="btn pf" data-act="create"><i class="ti ti-plus"></i>Create ${LABEL}</button></div>
+    <p class="mv-sub">${v2
+      ?`Read-only overview. Each row shows that ${LABEL}\u2019s own budget strategy timeline \u2014 scroll a row sideways to read the weeks. Open a ${LABEL} to edit it.`
+      :`Each ${LABEL} is a group of products budgeted separately inside this one Amazon account (MaxWarehouse \u00b7 us). Bars show <b>budget allocated vs. used</b> over the last 8 weeks. Every product belongs to exactly one ${LABEL} \u2014 new products join <b>${DEFAULT_NAME}</b>.`}</p>
+    ${body}
+    <div class="verswitch">
+      <span class="vlabel">View</span>
+      <button class="vopt ${!v2?'on':''}" data-ver="v1">V1 <span>cards</span></button>
+      <button class="vopt ${v2?'on':''}" data-ver="v2">V2 <span>strategy</span></button>
+    </div>`;
+}
+
+/* ===================== render ===================== */
+function render(){
+  const _tt=document.getElementById("tt");if(_tt)_tt.classList.remove("on");ttTarget=null;
+  let body;
+  if(featureOn&&view.screen==="manage"){body=cardsBlock()+manageView();}
+  else{
+    const pf=activePf(),hasStrat=hasStrategy(pf),showGraph=hasStrat&&stats(pf.id).n>0;
+    const c=colorOf(pf);
+    body=cardsBlock()+portfolioStrip()
+      +`<div class="tcard"><div class="exhead"><span class="title">Existing strategies</span>
+          ${showGraph?`<span class="cw"><i class="ti ti-map-pin"></i>Go to current week</span>`:''}
+
+          <span class="grow"></span>
+          ${featureOn&&!pf.def?`<span class="scopetag" style="background:${c.bg};color:${c.txt}"><span class="sdot" style="background:${c.dot}"></span>${pf.name}</span>`:''}
+          ${featureOn&&!multi()?`<button class="createstrat" type="button" data-act="create"><i class="ti ti-plus"></i>Create ${LABEL}</button>`:''}
+          <button class="createstrat" type="button" data-strat="new"><i class="ti ti-plus"></i>Create strategy</button></div>`
+      +timeline(pf)+`</div>`+table();
+  }
+  app.innerHTML=rail()+`<div class="main">${header()}${nav2()}<div class="pagewrap">${body}</div></div>`;
+  wire();renderDemo();tagCells();centerCurrentWeek();
+}
+function wire(){
+  const g=document.getElementById("gridbtn");
+  if(g)g.onclick=e=>{e.stopPropagation();openMenu=null;view.screen=view.screen==="manage"?"sp":"manage";render();};
+  app.querySelectorAll("[data-pick]").forEach(el=>el.onclick=e=>{
+    if(e.target.closest("[data-menu]")||e.target.closest(".pmenu"))return;
+    openMenu=null;view.active=el.dataset.pick;view.screen="sp";render();});
+  app.querySelectorAll("[data-menu]").forEach(el=>el.onclick=e=>{
+    e.stopPropagation();openMenu=openMenu===el.dataset.menu?null:el.dataset.menu;render();});
+  app.querySelectorAll(".pmenu").forEach(m=>m.onclick=e=>e.stopPropagation());
+  app.querySelectorAll("[data-act]").forEach(el=>el.onclick=e=>{
+    e.stopPropagation();const a=el.dataset.act;openMenu=null;
+    if(a==="create")openNameModal();
+    else if(a==="back"){view.screen="sp";render();}});
+  app.querySelectorAll("[data-edit]").forEach(el=>el.onclick=e=>{e.stopPropagation();openMenu=null;openEdit(el.dataset.edit);});
+  app.querySelectorAll("[data-del]").forEach(el=>el.onclick=e=>{e.stopPropagation();openMenu=null;openDelete(el.dataset.del);});
+  app.querySelectorAll("[data-alloc]").forEach(el=>el.onclick=e=>{e.stopPropagation();openMenu=null;openAlloc(el.dataset.alloc);});
+  app.querySelectorAll("[data-ver]").forEach(el=>el.onclick=e=>{e.stopPropagation();view.ver=el.dataset.ver;openMenu=null;render();});
+  app.querySelectorAll("[data-manageall]").forEach(el=>el.onclick=e=>{e.stopPropagation();openAllocAll();});
+  app.querySelectorAll("[data-manageprod]").forEach(el=>el.onclick=e=>{e.stopPropagation();openAlloc(view.active,false,true);});
+  app.querySelectorAll("[data-mkstrat]").forEach(el=>el.onclick=e=>{e.stopPropagation();openStrategyPanel("new",+el.dataset.mkstrat);});
+  app.querySelectorAll("[data-sedit]").forEach(el=>el.onclick=e=>{e.stopPropagation();openStrategyPanel("edit",null,el.dataset.sedit);});
+  app.querySelectorAll("[data-sdel]").forEach(el=>el.onclick=e=>{e.stopPropagation();deleteStrategySeg(el.dataset.sdel);});
+  const gw=app.querySelector(".exhead .cw");if(gw)gw.onclick=()=>centerCurrentWeek();
+  app.querySelectorAll("[data-strat]").forEach(el=>el.onclick=e=>{e.stopPropagation();openMenu=null;openStrategyPanel(el.dataset.strat);});
+  app.querySelectorAll("[data-open]").forEach(el=>el.onclick=e=>{e.stopPropagation();view.active=el.dataset.open;view.screen="sp";openMenu=null;render();});
+}
+document.addEventListener("click",()=>{if(openMenu){openMenu=null;render();}});
+
+/* ===================== modals ===================== */
+function closeModal(re){modal=null;host.classList.remove("on");scrim.classList.remove("on");host.innerHTML="";if(re)render();}
+function openModal(html){host.innerHTML=html;host.classList.add("on");scrim.classList.add("on");}
+
+/* --- 1) NAME modal (styled like the product modal) --- */
+function openNameModal(){
+  modal={type:"name"};
+  openModal(`<div class="mbox sm">
+    <div class="mhead"><span class="hic"><i class="ti ti-folder-plus"></i></span>
+      <div><h3>Name your ${LABEL}</h3><p>A ${LABEL} groups products so you can budget for them separately. You’ll pick the products next.</p></div>
+      <button class="x" id="mx">×</button></div>
+    <div class="mbody"><div class="fld"><label>${LABEL_C} name</label>
+      <input type="text" id="pfname" placeholder="e.g. Blackstone · grills" autocomplete="off">
+      <div class="errmsg" id="pferr"><i class="ti ti-alert-circle" style="font-size:14px"></i><span id="pferrt"></span></div>
+      <label class="optrow" id="nextrow"><span class="cbx" id="nextcb"></span>
+        <span class="optxt"><b>Add products as next step</b>
+          <small>Pick which products belong to this ${LABEL} right after creating it.</small></span></label>
+      <div class="hint"><i class="ti ti-info-circle"></i><span>Products move here from <b>${DEFAULT_NAME}</b> — nothing is deleted, and you can move them back any time.</span></div></div></div>
+    <div class="mfoot"><span class="grow"></span><button class="btn" id="mcancel">Cancel</button>
+      <button class="btn pf" id="mcreate" disabled><i class="ti ti-check"></i><span id="mcreatelab">Create ${LABEL}</span></button></div></div>`);
+  const inp=document.getElementById("pfname"),btn=document.getElementById("mcreate"),
+        err=document.getElementById("pferr"),errt=document.getElementById("pferrt");
+  const validate=()=>{const v=inp.value.trim();let msg="";
+    if(v&&portfolios.some(p=>p.name.toLowerCase()===v.toLowerCase()))msg=`A ${LABEL} called “${v}” already exists.`;
+    if(msg){err.classList.add("on");errt.textContent=msg;inp.classList.add("err");btn.disabled=true;}
+    else{err.classList.remove("on");inp.classList.remove("err");btn.disabled=!v;}};
+  inp.oninput=validate;
+  let addNext=false;
+  const cb=document.getElementById("nextcb"),lab=document.getElementById("mcreatelab");
+  document.getElementById("nextrow").onclick=e=>{e.preventDefault();
+    addNext=!addNext;cb.classList.toggle("on",addNext);
+    cb.innerHTML=addNext?'<i class="ti ti-check"></i>':'';
+    lab.textContent=addNext?"Create and Next":`Create ${LABEL}`;};
+  inp.onkeydown=e=>{if(e.key==="Enter"&&!btn.disabled)doCreate(inp.value.trim(),addNext);};
+  document.getElementById("mx").onclick=()=>closeModal(false);
+  document.getElementById("mcancel").onclick=()=>closeModal(false);
+  btn.onclick=()=>doCreate(inp.value.trim(),addNext);
+  setTimeout(()=>inp.focus(),50);
+}
+function doCreate(name,addNext){
+  const id="p"+(++seq)+Date.now();
+  portfolios.push({id,name,color:PALETTE[(portfolios.length-1)%PALETTE.length],strategies:[]});
+  view.active=id;view.screen="sp";closeModal(true);
+  toast(`“${name}” ${LABEL} has been created.`);       /* stays visible above the next modal */
+  if(addNext)openAlloc(id,true);
+}
+
+/* --- 2) PRODUCT selection modal --- */
+function openAlloc(focusId,fromCreate,manage){
+  const memb=productsOf(focusId).map(x=>x.i);
+  allocState={q:"",brand:"All",sel:new Set(memb),base:new Set(memb),focusPf:focusId||null};
+  modal={type:"alloc"};
+  const pf=findPf(focusId),c=colorOf(pf);
+  openModal(`<div class="mbox lg">
+    <div class="mhead"><span class="hic" style="background:${c.bg};color:${c.txt}"><i class="ti ti-package"></i></span>
+      <div><h3>${manage?"Manage products":fromCreate?`Add products to \u201c${pf.name}\u201d`:`Products in \u201c${pf.name}\u201d`}</h3>
+        <p>${manage?`Choose which products belong to \u201c${pf.name}\u201d. Ticking a product that sits in another ${LABEL} moves it here \u2014 a product belongs to one ${LABEL} at a time.`
+                   :`Tick the products that belong to this ${LABEL}, then save. A product always belongs to exactly one ${LABEL}.`}</p></div>
+      <button class="x" id="mx">\u00d7</button></div>
+    <div class="mbody">
+      <div class="alloctools">
+        <div class="asearch"><i class="ti ti-search"></i><input type="text" id="aq" placeholder="Search products or ASIN\u2026"></div>
+        ${BRANDS.map(b=>`<span class="fchip ${b==="All"?'on':''}" data-brand="${b}">${b}</span>`).join("")}
+        <span style="flex:1"></span>
+        <button class="btn sm" id="selall2"></button>
+        <span class="acount" id="acount"></span></div>
+      <div id="alist"></div></div>
+    <div class="mfoot"><span class="acount" id="afoot"></span><span class="grow"></span>
+      <button class="btn" id="mcancel2">Cancel</button>
+      <button class="btn green" id="msave2"><i class="ti ti-check"></i>Save products</button></div></div>`);
+  document.getElementById("mx").onclick=()=>closeModal(true);
+  document.getElementById("mcancel2").onclick=()=>closeModal(true);
+  document.getElementById("msave2").onclick=commitAlloc;
+  const q=document.getElementById("aq");
+  q.oninput=e=>{allocState.q=e.target.value;renderAllocList();};
+  host.querySelectorAll("[data-brand]").forEach(el=>el.onclick=()=>{
+    allocState.brand=el.dataset.brand;
+    host.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("on",x.dataset.brand===allocState.brand));
+    renderAllocList();});
+  document.getElementById("selall2").onclick=()=>{
+    const vis=allocVisible(),all=vis.every(({i})=>allocState.sel.has(i));
+    vis.forEach(({i})=>all?allocState.sel.delete(i):allocState.sel.add(i));
+    renderAllocList();};
+  renderAllocList();setTimeout(()=>q.focus(),50);
+}
+function allocVisible(){const q=allocState.q.toLowerCase();
+  return PRODUCTS.map((p,i)=>({p,i})).filter(({p})=>
+    (allocState.brand==="All"||p.brand===allocState.brand)&&(!q||(p.name+" "+p.asin).toLowerCase().includes(q)));}
+function renderAllocList(){
+  const vis=allocVisible(),id=allocState.focusPf,me=findPf(id);
+  const rows=vis.map(({p,i})=>{const ipf=findPf(pfOf(i)),c=colorOf(ipf),sel=allocState.sel.has(i);
+    const elsewhere=pfOf(i)!==id;
+    return `<div class="arow ${sel?'sel':''}" data-row="${i}">
+      <div><span class="cbx ${sel?'on':''}">${sel?'<i class="ti ti-check"></i>':''}</span></div>
+      <div><span class="athumb">${thumb(p.brand)}</span></div>
+      <div class="aname"><div class="t">${p.name}</div><div class="s">${p.asin} \u00b7 ${p.brand} \u00b7 ${p.campaigns} campaign${p.campaigns===1?'':'s'}${p.isNew?' \u00b7 <span style="color:#22863d;font-weight:600">new</span>':''}</div></div>
+      <div class="statecell"><span class="statepill ${p.active?'act':'pau'}"><i class="ti ti-${p.active?'player-play-filled':'player-pause-filled'}" style="font-size:11px"></i>${p.active?'Active':'Paused'}</span></div>
+      <div><span class="pfchip2" style="background:${c.bg};color:${c.txt}">${ipf.none?'<i class="ti ti-alert-circle" style="font-size:11px"></i>':ipf.def?'<i class="ti ti-inbox" style="font-size:11px"></i>':`<span class="sdot" style="background:${c.dot}"></span>`}${ipf.name}</span>
+        ${sel&&elsewhere?`<span class="movetag">\u2192 moves here</span>`:''}</div></div>`;}).join("");
+  const allVis=vis.length&&vis.every(({i})=>allocState.sel.has(i));
+  document.getElementById("alist").innerHTML = vis.length
+    ? `<div class="alist"><div class="arow ahead"><div><span class="cbx ${allVis?'on':''}" id="selall">${allVis?'<i class="ti ti-check"></i>':''}</span></div><div></div><div>Product</div><div class="statecell">State</div><div>Currently in</div></div>${rows}</div>`
+    : `<div class="alist"><div class="aempty"><i class="ti ti-search-off"></i>No products match \u201c${allocState.q}\u201d${allocState.brand!=="All"?` in ${allocState.brand}`:''}.
+        <div style="margin-top:10px"><button class="btn sm" id="clearf">Clear filters</button></div></div></div>`;
+  const selN=allocState.sel.size,budget=[...allocState.sel].reduce((t,i)=>t+PRODUCTS[i].budget,0);
+  document.getElementById("acount").textContent=`${vis.length} shown`;
+  const sb=document.getElementById("selall2");
+  if(sb)sb.textContent=allVis?"Deselect all":"Select all";
+  document.getElementById("afoot").innerHTML=`<b>${selN}</b> of ${PRODUCTS.length} selected for \u201c${me.name}\u201d \u00b7 <b>${usd(budget)}</b>/wk`;
+  document.querySelectorAll("[data-row]").forEach(el=>el.onclick=()=>toggleSel(+el.dataset.row,el));
+  const sa=document.getElementById("selall");
+  if(sa)sa.onclick=e=>{e.stopPropagation();
+    const all=vis.every(({i})=>allocState.sel.has(i));
+    vis.forEach(({i})=>all?allocState.sel.delete(i):allocState.sel.add(i));renderAllocList();};
+  const cf=document.getElementById("clearf");
+  if(cf)cf.onclick=()=>{allocState.q="";allocState.brand="All";document.getElementById("aq").value="";
+    host.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("on",x.dataset.brand==="All"));renderAllocList();};
+}
+function toggleSel(i,row){
+  if(allocState.sel.has(i))allocState.sel.delete(i);else allocState.sel.add(i);
+  renderAllocList();
+}
+
+function reRenderAlloc(){modal&&modal.type==="allocall"?renderAllocAllList():renderAllocList();}
+function moveOne(i,toId){const from=pfOf(i);if(from===toId)return;
+  lastMove={items:[{i,from}]};if(toId==="default")delete assign[i];else assign[i]=toId;
+  reRenderAlloc();
+  toast(toId===NOPF?`“${PRODUCTS[i].name}” removed from all ${LABEL}s.`
+                   :`“${PRODUCTS[i].name}” moved to ${findPf(toId).name}.`,true);}
+function moveMany(idxs,toId){
+  const items=idxs.map(i=>({i,from:pfOf(i)})).filter(x=>x.from!==toId);
+  if(!items.length){allocState.sel.clear();renderAllocList();return;}
+  lastMove={items};items.forEach(({i})=>{if(toId==="default")delete assign[i];else assign[i]=toId;});
+  allocState.sel.clear();renderAllocList();
+  toast(`${items.length} product${items.length===1?'':'s'} moved to ${findPf(toId).name}.`,true);}
+function commitAlloc(){
+  const id=allocState.focusPf;
+  if(!id){closeModal(true);return;}
+  const pf=findPf(id);
+  /* products being pulled out of another NAMED portfolio need confirmation */
+  const steal=[...allocState.sel].filter(i=>{const c=pfOf(i);
+    return c!==id&&c!==NOPF&&!findPf(c).def;}).map(i=>({i,from:pfOf(i)}));
+  if(steal.length){confirmSteal(pf,steal,()=>applyAlloc(id));return;}
+  applyAlloc(id);
+}
+function applyAlloc(id){
+  const pf=findPf(id),isDef=!!pf.def;const items=[];let added=0,removed=0;
+  PRODUCTS.forEach((p,i)=>{
+    const cur=pfOf(i),isIn=cur===id,want=allocState.sel.has(i);
+    if(want&&!isIn){items.push({i,from:cur});if(isDef)delete assign[i];else assign[i]=id;added++;}
+    else if(!want&&isIn){items.push({i,from:cur});if(isDef)assign[i]=NOPF;else delete assign[i];removed++;}
+  });
+  if(items.length)lastMove={items};
+  closeModal(true);
+  if(!added&&!removed){toast(`No changes to \u201c${pf.name}\u201d.`);return;}
+  const parts=[];
+  if(added)parts.push(`${added} product${added===1?'':'s'} added`);
+  if(removed)parts.push(`${removed} removed`);
+  toast(`${parts.join(" \u00b7 ")} \u2014 \u201c${pf.name}\u201d now has ${stats(id).n}.`,true);
+}
+function confirmSteal(pf,steal,proceed){
+  const by={};steal.forEach(({from})=>{by[from]=(by[from]||0)+1;});
+  const lines=Object.entries(by).map(([fid,n])=>{const f=findPf(fid),c=colorOf(f);
+    return `<div class="stealrow"><span class="pfchip2" style="background:${c.bg};color:${c.txt}">
+      <span class="sdot" style="background:${c.dot}"></span>${f.name}</span>
+      <span class="stealn">\u2192 ${n} product${n===1?'':'s'} will move out</span></div>`;}).join("");
+  openModal(`<div class="mbox sm">
+    <div class="mhead"><span class="hic" style="background:var(--yellow-200);color:var(--amber-700)"><i class="ti ti-transfer"></i></span>
+      <div><h3>Move products between ${LABEL}s?</h3>
+        <p>A product belongs to one ${LABEL} at a time, so these will leave their current ${LABEL} and its budget.</p></div>
+      <button class="x" id="csx">\u00d7</button></div>
+    <div class="mbody">${lines}
+      <div class="warnbox" style="margin-top:14px"><i class="ti ti-info-circle"></i>
+        <span>They will be budgeted under <b>\u201c${pf.name}\u201d</b> from the next allocation run.</span></div></div>
+    <div class="mfoot"><span class="grow"></span><button class="btn" id="csno">Cancel</button>
+      <button class="btn pf" id="csyes"><i class="ti ti-check"></i>Move products</button></div></div>`);
+  document.getElementById("csx").onclick=()=>closeModal(false);
+  document.getElementById("csno").onclick=()=>closeModal(false);
+  document.getElementById("csyes").onclick=()=>proceed();
+}
+function undoMove(){if(!lastMove)return;
+  lastMove.items.forEach(({i,from})=>{if(from==="default")delete assign[i];else assign[i]=from;});
+  lastMove=null;hideToast();
+  if(modal&&(modal.type==="alloc"||modal.type==="allocall"))reRenderAlloc();else render();}
+
+/* --- 2b) MANAGE ALL PRODUCTS (dropdown-driven, no checkboxes) --- */
+function openAllocAll(){
+  allocState={q:"",brand:"All",sel:new Set(),base:new Set(),focusPf:null};
+  modal={type:"allocall"};
+  openModal(`<div class="mbox lg">
+    <div class="mhead"><span class="hic"><i class="ti ti-package"></i></span>
+      <div><h3>Manage products</h3>
+        <p>Use the ${LABEL_C} dropdown on each row to move a product between ${LABEL}s, or remove it from all of them.
+           A product belongs to one ${LABEL} at a time \u2014 changes apply immediately.</p></div>
+      <button class="x" id="mx">\u00d7</button></div>
+    <div class="mbody">
+      <div class="alloctools">
+        <div class="asearch"><i class="ti ti-search"></i><input type="text" id="aq" placeholder="Search products or ASIN\u2026"></div>
+        ${BRANDS.map(b=>`<span class="fchip ${b==="All"?'on':''}" data-brand="${b}">${b}</span>`).join("")}
+        <span style="flex:1"></span><span class="acount" id="acount"></span></div>
+      <div id="alist"></div></div>
+    <div class="mfoot"><span class="acount" id="afoot"></span><span class="grow"></span>
+      <button class="btn green" id="mdone3"><i class="ti ti-check"></i>Done</button></div></div>`);
+  document.getElementById("mx").onclick=()=>closeModal(true);
+  document.getElementById("mdone3").onclick=()=>closeModal(true);
+  const q=document.getElementById("aq");
+  q.oninput=e=>{allocState.q=e.target.value;renderAllocAllList();};
+  host.querySelectorAll("[data-brand]").forEach(el=>el.onclick=()=>{
+    allocState.brand=el.dataset.brand;
+    host.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("on",x.dataset.brand===allocState.brand));
+    renderAllocAllList();});
+  renderAllocAllList();setTimeout(()=>q.focus(),50);
+}
+function renderAllocAllList(){
+  const vis=allocVisible();
+  const opts=cur=>[...portfolios.map(p=>({id:p.id,name:p.name+(p.def?" (default)":"")}),),{id:NOPF,name:"\u2014 Not in a portfolio"}]
+    .map(o=>`<option value="${o.id}" ${o.id===cur?'selected':''}>${o.name}</option>`).join("");
+  const rows=vis.map(({p,i})=>{const ipf=findPf(pfOf(i)),c=colorOf(ipf);
+    return `<div class="arow arow-dd" data-rowdd="${i}">
+      <div><span class="athumb">${thumb(p.brand)}</span></div>
+      <div class="aname"><div class="t">${p.name}</div><div class="s">${p.asin} \u00b7 ${p.brand} \u00b7 ${p.campaigns} campaign${p.campaigns===1?'':'s'}${p.isNew?' \u00b7 <span style="color:#22863d;font-weight:600">new</span>':''}</div></div>
+      <div class="statecell"><span class="statepill ${p.active?'act':'pau'}"><i class="ti ti-${p.active?'player-play-filled':'player-pause-filled'}" style="font-size:11px"></i>${p.active?'Active':'Paused'}</span></div>
+      <div><select class="pfselect" data-move="${i}" style="border-left:4px solid ${c.dot}">${opts(ipf.id)}</select></div></div>`;}).join("");
+  document.getElementById("alist").innerHTML = vis.length
+    ? `<div class="alist"><div class="arow arow-dd ahead"><div></div><div>Product</div><div class="statecell">State</div><div>${LABEL_C}</div></div>${rows}</div>`
+    : `<div class="alist"><div class="aempty"><i class="ti ti-search-off"></i>No products match \u201c${allocState.q}\u201d${allocState.brand!=="All"?` in ${allocState.brand}`:''}.
+        <div style="margin-top:10px"><button class="btn sm" id="clearf">Clear filters</button></div></div></div>`;
+  const none=PRODUCTS.filter((p,i)=>pfOf(i)===NOPF).length;
+  document.getElementById("acount").textContent=`${vis.length} shown`;
+  document.getElementById("afoot").innerHTML=`${PRODUCTS.length} products \u00b7 <b>${portfolios.length}</b> ${LABEL}${portfolios.length===1?'':'s'}${none?` \u00b7 <b style="color:var(--amber-700)">${none}</b> not in a ${LABEL}`:''}`;
+  document.querySelectorAll("[data-move]").forEach(sel=>{sel.onchange=e=>{e.stopPropagation();moveOne(+sel.dataset.move,sel.value);};});
+  const cf=document.getElementById("clearf");
+  if(cf)cf.onclick=()=>{allocState.q="";allocState.brand="All";document.getElementById("aq").value="";
+    host.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("on",x.dataset.brand==="All"));renderAllocAllList();};
+}
+
+/* --- 3) EDIT (rename + jump to products) --- */
+function openEdit(id){
+  const pf=findPf(id);modal={type:"edit",id};
+  openModal(`<div class="mbox sm">
+    <div class="mhead"><span class="hic"><i class="ti ti-pencil"></i></span>
+      <div><h3>Edit ${LABEL}</h3><p>Rename it, or change which products it contains.</p></div><button class="x" id="mx">×</button></div>
+    <div class="mbody"><div class="fld"><label>${LABEL_C} name</label>
+      <input type="text" id="rname" value="${pf.name.replace(/"/g,'&quot;')}" autocomplete="off">
+      <div class="errmsg" id="rerr"><i class="ti ti-alert-circle" style="font-size:14px"></i><span id="rerrt"></span></div></div>
+      <div style="margin-top:16px"><button class="btn" id="goprod" style="width:100%;justify-content:center">
+        <i class="ti ti-package"></i>Manage products (${stats(id).n})</button></div></div>
+    <div class="mfoot"><span class="grow"></span><button class="btn" id="mcancel">Cancel</button>
+      <button class="btn pf" id="msave"><i class="ti ti-check"></i>Save</button></div></div>`);
+  const inp=document.getElementById("rname"),btn=document.getElementById("msave"),
+        err=document.getElementById("rerr"),errt=document.getElementById("rerrt");
+  const validate=()=>{const v=inp.value.trim();let msg="";
+    if(v&&portfolios.some(p=>p.id!==id&&p.name.toLowerCase()===v.toLowerCase()))msg=`A ${LABEL} called “${v}” already exists.`;
+    if(msg){err.classList.add("on");errt.textContent=msg;inp.classList.add("err");btn.disabled=true;}
+    else{err.classList.remove("on");inp.classList.remove("err");btn.disabled=!v;}};
+  inp.oninput=validate;inp.onkeydown=e=>{if(e.key==="Enter"&&!btn.disabled)save();};
+  const save=()=>{const old=pf.name;pf.name=inp.value.trim();closeModal(true);if(old!==pf.name)toast(`Renamed to “${pf.name}”.`);};
+  document.getElementById("goprod").onclick=()=>{pf.name=inp.value.trim()||pf.name;closeModal(false);openAlloc(id);};
+  document.getElementById("mx").onclick=()=>closeModal(false);
+  document.getElementById("mcancel").onclick=()=>closeModal(false);
+  btn.onclick=save;setTimeout(()=>{inp.focus();inp.select();},50);
+}
+
+/* --- 4) DELETE --- */
+function openDelete(id){
+  const pf=findPf(id),s=stats(id);modal={type:"delete",id};
+  openModal(`<div class="mbox sm">
+    <div class="mhead"><span class="hic" style="background:#fdeceb;color:var(--red)"><i class="ti ti-trash"></i></span>
+      <div><h3>Delete “${pf.name}”?</h3><p>The ${LABEL} is removed. No products or campaigns are deleted.</p></div><button class="x" id="mx">×</button></div>
+    <div class="mbody"><div class="warnbox"><i class="ti ti-arrow-back-up"></i><span>
+      <b>${s.n} product${s.n===1?'':'s'}</b> will move back to <b>${DEFAULT_NAME}</b> and be budgeted there${s.budget?` (<b>${usd(s.budget)}</b>/wk)`:''}.</span></div></div>
+    <div class="mfoot"><span class="grow"></span><button class="btn" id="mcancel">Cancel</button>
+      <button class="btn danger" id="mdel"><i class="ti ti-trash"></i>Delete ${LABEL}</button></div></div>`);
+  document.getElementById("mx").onclick=()=>closeModal(false);
+  document.getElementById("mcancel").onclick=()=>closeModal(false);
+  document.getElementById("mdel").onclick=()=>{
+    Object.keys(assign).forEach(k=>{if(assign[k]===id)delete assign[k];});
+    portfolios=portfolios.filter(p=>p.id!==id);
+    if(view.active===id)view.active="default";
+    closeModal(true);toast(`“${pf.name}” deleted · ${s.n} product${s.n===1?'':'s'} returned to ${DEFAULT_NAME}.`);};
+}
+
+/* ===================== toast + demo ===================== */
+let toastT=null;
+function toast(msg,undo){
+  toastEl.innerHTML=`<i class="ti ti-circle-check ok"></i><span>${msg}</span>${undo?'<button id="undo">Undo</button>':''}`;
+  toastEl.classList.add("on");
+  const u=document.getElementById("undo");if(u)u.onclick=undoMove;
+  clearTimeout(toastT);toastT=setTimeout(hideToast,4200);}
+function hideToast(){toastEl.classList.remove("on");}
+function renderDemo(){
+  demoEl.innerHTML=`<div class="dh"><i class="ti ti-flask"></i>Prototype controls</div>
+    <div class="drow"><span class="dsw ${featureOn?'on':''}" id="dfeat"></span><span>${LABEL_C}s ${featureOn?'enabled':'off'} <span style="color:var(--ink-3)">(paid)</span></span></div>
+    <div class="drow"><span class="reset" id="dseed"><i class="ti ti-wand" style="font-size:14px"></i>Seed 2 example ${LABEL}s</span></div>
+    <div class="drow"><span class="reset" id="dreset"><i class="ti ti-refresh" style="font-size:14px"></i>Reset prototype</span></div>`;
+  document.getElementById("dfeat").onclick=()=>{featureOn=!featureOn;if(!featureOn)view={screen:"sp",active:"default",ver:view.ver||"v1"};openMenu=null;render();};
+  document.getElementById("dseed").onclick=()=>{
+    portfolios=[{id:"default",name:DEFAULT_NAME,def:true,strategies:[newStrat(4,8),newStrat(8,NOWI+3)]},
+      {id:"pA",name:"Blackstone · grills",color:PALETTE[0],strategies:[newStrat(6,NOWI+2)]},
+      {id:"pB",name:"New launches",color:PALETTE[1],strategies:[]}];
+    assign={0:"pA",1:"pA",2:"pA",8:"pB",9:"pB"};
+    view={screen:"sp",active:"pA",ver:view.ver||"v1"};openMenu=null;render();toast("Seeded 2 example "+LABEL+"s.");};
+  document.getElementById("dreset").onclick=()=>{
+    portfolios=[{id:"default",name:DEFAULT_NAME,def:true,strategies:[newStrat(4,8),newStrat(8,NOWI+3)]}];assign={};
+    view={screen:"sp",active:"default",ver:view.ver||"v1"};featureOn=true;openMenu=null;lastMove=null;render();toast("Prototype reset.");};
+}
+/* ===================== timeline interactions ===================== */
+function centerCurrentWeek(){
+  document.querySelectorAll(".tlscroll").forEach(sc=>{
+    const tl=sc.querySelector(".tl");if(!tl)return;
+    const colW=(tl.scrollWidth-180)/NW;
+    sc.scrollLeft=Math.max(0,180+colW*NOWI-sc.clientWidth/2+colW/2);
+    sc.classList.contains("_w")||sc.addEventListener("scroll",()=>tl.classList.toggle("scrolled",sc.scrollLeft>2));
+    sc.classList.add("_w");tl.classList.toggle("scrolled",sc.scrollLeft>2);
+  });
+}
+/* whole-column highlight driven from the strategy row / any week cell */
+document.addEventListener("mouseover",e=>{
+  const tl=e.target.closest(".tl");
+  document.querySelectorAll(".ovlay .ov.hot").forEach(x=>x.classList.remove("hot"));
+  if(!tl||tl.classList.contains("ro"))return;
+  const cellEl=e.target.closest("[data-wk],[data-ovc],.sstrip");
+  if(!cellEl)return;
+  const ovs=tl.querySelectorAll(".ovlay .ov");
+  if(cellEl.classList.contains("sstrip")){
+    const seg=stratsOf(activePf()).find(g=>g.id===cellEl.dataset.seg);
+    if(seg)for(let i=seg.from;i<Math.min(seg.to,NW);i++)ovs[i]&&ovs[i].classList.add("hot");
+  }else{
+    const i=+(cellEl.dataset.wk??cellEl.dataset.ovc);
+    ovs[i]&&ovs[i].classList.add("hot");
+  }
+});
+
+/* ===================== strategy side panel (content TBD) ===================== */
+const spanel=document.getElementById("spanel");
+function openStrategyPanel(mode,wk,segId){
+  const pf=activePf(),edit=mode==="edit";
+  const seg=edit?stratsOf(pf).find(g=>g.id===segId):null;
+  const wkLabel=edit&&seg?`${WEEKS[seg.from]} \u2013 ${WEEKS[Math.min(seg.to,NW)-1]}`:(wk!=null?WEEKS[wk]:"");
+  spanel.innerHTML=`<div class="sp-head">
+      <div><h3>${edit?"Edit":"Create"} strategy</h3>
+        <p>${edit?"Adjust":"Define"} how much \u201c${pf.name}\u201d spends on ads and bidding${wkLabel?` \u00b7 <b>${wkLabel}</b>`:""}.</p></div>
+      <button class="x" id="spx">\u00d7</button></div>
+    <div class="sp-body"><div class="sp-ph"><i class="ti ti-wave-sine"></i>
+      Strategy configuration UI goes here.</div></div>
+    <div class="sp-foot"><span class="grow"></span>
+      <button class="btn" id="spcancel">Cancel</button>
+      <button class="btn green" id="spsave"><i class="ti ti-check"></i>${edit?"Save":"Create"} strategy</button></div>`;
+  spanel.classList.add("on");scrim.classList.add("on");
+  const close=()=>{spanel.classList.remove("on");scrim.classList.remove("on");};
+  document.getElementById("spx").onclick=close;
+  document.getElementById("spcancel").onclick=close;
+  document.getElementById("spsave").onclick=()=>{
+    if(!edit){
+      if(!pf.strategies)pf.strategies=[];
+      const from=wk!=null?wk:NOWI;
+      let to=from+4;                                        /* default 4-week run, clipped to next strategy */
+      stratsOf(pf).forEach(g=>{if(g.from>=from&&g.from<to)to=g.from;});
+      pf.strategies.push(newStrat(from,Math.min(to,NW)));
+    }
+    close();render();
+    toast(`Strategy ${edit?"updated":"created"} for \u201c${pf.name}\u201d.`);};
+}
+function deleteStrategySeg(segId){
+  const pf=activePf(),seg=stratsOf(pf).find(g=>g.id===segId);
+  if(!seg||seg.to<=NOWI)return;                             /* past strategies are records, not editable */
+  pf.strategies=stratsOf(pf).filter(g=>g.id!==segId);
+  render();toast(`Strategy removed from \u201c${pf.name}\u201d.`);
+}
+
+
+/* ===================== table cell + column hover ===================== */
+const PCOLS=15;
+function tagCells(){
+  document.querySelectorAll(".pgrid").forEach(g=>{
+    [...g.children].forEach((c,i)=>{ if(!c.style.gridColumn) c.dataset.col=i%PCOLS; });
+  });
+  document.querySelectorAll(".wkhead,.satrow,.paRow").forEach(r=>{
+    if(r.closest(".nohover"))return;                 /* read-only rows: scroll only, no hover */
+    [...r.children].forEach((c,i)=>{ c.dataset.tcol=i; c.classList.add("tlcell"); });
+  });
+}
+function clearHL(){document.querySelectorAll(".cellhl,.colhl").forEach(x=>x.classList.remove("cellhl","colhl"));}
+document.addEventListener("mouseover",e=>{
+  const cell=e.target.closest(".pgrid > div, .tlcell");
+  clearHL(); if(!cell||cell.closest(".nohover"))return;
+  cell.classList.add("cellhl");
+  const c=cell.dataset.col,t=cell.dataset.tcol;
+  if(c!==undefined)document.querySelectorAll('.pgrid > div[data-col="'+c+'"]').forEach(x=>{if(x!==cell)x.classList.add("colhl");});
+  if(t!==undefined)document.querySelectorAll('.tlcell[data-tcol="'+t+'"]').forEach(x=>{if(x!==cell)x.classList.add("colhl");});
+});
+
+/* ===================== body-level tooltip (escapes scroll/overflow clipping) ===================== */
+const ttEl=document.getElementById("tt");let ttTarget=null;
+function placeTT(el){const r=el.getBoundingClientRect();ttEl.textContent=el.getAttribute("data-tip")||"";
+  ttEl.classList.add("on");const tr=ttEl.getBoundingClientRect();
+  let left=r.left+r.width/2-tr.width/2;left=Math.max(8,Math.min(left,window.innerWidth-tr.width-8));
+  let top=r.top-tr.height-9;if(top<8)top=r.bottom+9;               // flip below if no room above
+  ttEl.style.left=left+"px";ttEl.style.top=top+"px";}
+document.addEventListener("mouseover",e=>{const el=e.target.closest("[data-tip]");
+  if(el&&el.closest(".nohover"))return;
+  if(el&&el!==ttTarget){ttTarget=el;placeTT(el);}});
+document.addEventListener("mouseout",e=>{const el=e.target.closest("[data-tip]");
+  if(el&&el===ttTarget&&!el.contains(e.relatedTarget)){ttTarget=null;ttEl.classList.remove("on");}});
+window.addEventListener("scroll",()=>{if(ttTarget)placeTT(ttTarget);},true);
+
+scrim.onclick=()=>closeModal(modal&&modal.type==="alloc");
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(modal){const a=modal.type==="alloc";closeModal(a);}else if(openMenu){openMenu=null;render();}}});
+render();
+</script>
+</body>
+</html>

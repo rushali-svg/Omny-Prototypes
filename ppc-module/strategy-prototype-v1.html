@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy level — versions v2 (Omny PPC)</title>
+<style>
+  :root{
+    --accent:#2f6bf3;--accent-weak:#eaf1fe;--ink:#1f2328;--ink-2:#5b626c;--ink-3:#8c93a0;
+    --line:#e9ebef;--line-2:#dfe2e8;--panel:#f6f7f9;--panel-2:#fbfbfc;
+    --purple:#8a7fe8;--blue-line:#5b8def;--green:#1f9d57;--red:#e0574f;--amber:#e08a2e;
+    --gold:#c8b06b;--rail:#191a1c;--rail-ink:#8b8f96;
+    --radius:8px;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --shadow-card:0 1px 2px rgba(16,24,40,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#e9ebf0;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .stage{max-width:1500px;margin:0 auto;padding:22px}
+  .frame{background:#fff;border:1px solid var(--line-2);border-radius:14px;overflow:hidden;box-shadow:0 6px 30px rgba(16,24,40,.08)}
+  .frame-bar{height:36px;background:#f3f4f6;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;padding:0 13px}
+  .dot{width:10px;height:10px;border-radius:50%;background:#d3d6db}
+  .frame-url{margin-left:10px;font-size:11.5px;color:var(--ink-3);background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 12px}
+  .app{display:grid;grid-template-columns:60px 1fr;min-height:680px}
+  .rail{background:var(--rail);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:22px}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--gold);color:#2a230c;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .rail i{color:var(--rail-ink);font-size:19px}.rail .active-i{color:#fff}.rail .spacer{flex:1}
+  .main{padding:0 26px 40px}
+
+  .apphead{padding:20px 0 6px;background:#fff}
+  .apphead.stick{position:sticky;top:0;z-index:25;border-bottom:1px solid var(--line);margin-bottom:14px}
+  .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .h-title{font-size:19px;font-weight:600;letter-spacing:-.2px}
+  .selector{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line-2);border-radius:9px;padding:7px 11px;font-size:13px}
+  .selector .badge{background:var(--accent);color:#fff;font-size:11px;min-width:17px;height:17px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+  .selector i.ti-chevron-down{color:var(--ink-3);font-size:15px}
+  .crumb{color:var(--ink-3);font-size:16px}
+  .sel-strat{position:relative;cursor:pointer;border-color:#cdddff}
+  .sdot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .sel-strat .nm{font-weight:600}
+  .stratmenu{position:absolute;top:44px;left:0;min-width:250px;background:#fff;border:1px solid var(--line-2);border-radius:11px;box-shadow:0 10px 30px rgba(16,24,40,.16);padding:6px;z-index:30;display:none}
+  .stratmenu.on{display:block}
+  .smi{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;font-size:13px;color:var(--ink-2);cursor:pointer}
+  .smi:hover{background:var(--panel)}
+  .smi.on{background:#f6f9ff;color:var(--ink);font-weight:500}
+  .smi .b{margin-left:auto;font-size:11px;color:var(--ink-3)}
+  .smi.add{color:var(--accent);border-top:1px solid var(--line);border-radius:0 0 8px 8px;margin-top:4px}
+
+  .nav2{display:flex;gap:6px;margin:6px 0 14px;border-bottom:1px solid var(--line);padding-bottom:2px}
+  .nav2 a{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:9px;font-size:13.5px;color:var(--ink-2);text-decoration:none;cursor:pointer}
+  .nav2 a i{font-size:17px}.nav2 a.on{background:#eef0f3;color:var(--ink);font-weight:500}
+
+  .strat-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--panel-2);margin-bottom:10px;box-shadow:var(--shadow-card)}
+  .strat-bar .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--ink-3);margin-right:2px}
+  .spill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);background:#fff;border-radius:20px;padding:6px 13px;font-size:12.5px;color:var(--ink-2);cursor:pointer;transition:border-color .12s}
+  .spill:hover{border-color:#cdddff}
+  .spill .b{background:#eef0f3;color:var(--ink-2);border-radius:10px;font-size:11px;padding:1px 7px}
+  .spill.on{color:#fff}.spill.on .b{background:rgba(255,255,255,.25);color:#fff}
+  .spill.add{color:var(--accent);border-style:dashed;border-color:#bcd2ff}
+  .strat-hint{font-size:11.5px;color:var(--ink-3);margin:2px 2px 16px}
+
+  .scopebar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);padding:10px 14px;border:1px solid var(--line-2);border-radius:10px;margin-bottom:16px;box-shadow:var(--shadow-card)}
+  .scopebar.stick{position:sticky;top:0;z-index:22}
+  .scopebar b{color:var(--ink);font-weight:600}
+  .scopebar .sep{color:var(--ink-3)}
+  .scopebar .applies{margin-left:auto;color:var(--ink-3);font-size:11.5px}
+
+  .pause{display:flex;justify-content:center;margin:0 0 -1px}
+  .pause button{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:12.5px;color:var(--accent);background:#fff;border:1px solid #cdddff;border-bottom:0;border-radius:9px 9px 0 0;padding:7px 15px;cursor:pointer;transform:translateY(1px)}
+  .cards{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-card)}
+  .setcard{padding:16px 18px;border-right:1px solid var(--line);position:relative;cursor:pointer}
+  .setcard:last-child{border-right:0}
+  .setcard.on{background:var(--accent-weak)}
+  .setcard.on::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--accent)}
+  .setcard .r1{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:600}
+  .setcard .r1 i{font-size:18px;color:var(--ink-2)}
+  .setcard.on .r1,.setcard.on .r1 i{color:var(--accent)}
+  .setcard p{margin:6px 0 0 27px;font-size:12px;color:var(--ink-3);line-height:1.4}
+
+  .editing-head{display:flex;align-items:center;gap:10px;padding:10px 15px;border:1px solid var(--line-2);border-radius:11px 11px 0 0;border-bottom:0;font-size:13px;margin-top:16px}
+  .editing-head b{font-weight:600}
+  .editing-head .tag{margin-left:auto;font-size:11px;color:var(--ink-3)}
+  .settings-wrap{border:1px solid var(--line-2);border-radius:0 0 12px 12px;padding:14px;box-shadow:var(--shadow-card)}
+
+  .section-h{display:flex;align-items:center;gap:12px;margin:24px 0 10px}
+  .section-h h2{font-size:16px;font-weight:600;margin:0}
+  .section-h .cw{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink-2)}
+  .section-h .grow{flex:1}
+  .btn-strat{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;color:var(--accent);background:#fff;border:1px solid #cdddff;border-radius:9px;padding:8px 14px;cursor:pointer}
+  .btn-strat:hover{background:#f4f8ff}
+
+  .tl{border:1px solid var(--line);border-radius:12px;padding:6px 0 8px;overflow:hidden;box-shadow:var(--shadow-card)}
+  .tlrow{display:grid;grid-template-columns:170px 1fr;border-bottom:1px solid #f2f3f6;align-items:center}
+  .tlrow:last-child{border-bottom:0}
+  .tlrow .lab{font-size:12px;color:var(--ink-2);text-align:right;padding:0 14px;min-height:40px;display:flex;align-items:center;justify-content:flex-end}
+  .wkhead{display:grid;grid-template-columns:repeat(13,1fr);border-bottom:1px solid var(--line)}
+  .wkhead div{font-size:11px;color:var(--ink-3);padding:8px 6px}.wkhead .now{background:#f4f2fb}
+  .chip-fixed{display:inline-flex;align-items:center;gap:6px;background:#fef6ec;border:1px solid #f3d9b0;color:#b56a12;border-radius:7px;font-size:11.5px;padding:3px 9px;font-weight:600}
+  .lane{display:grid;grid-template-columns:210px 1fr;border-bottom:1px solid #f2f3f6;cursor:pointer;align-items:center}
+  .lane:hover{background:#fafbfd}.lane.on{background:#f7f9ff}
+  .lane .lab{justify-content:flex-start;padding-left:14px;gap:8px;font-size:12.5px;color:var(--ink)}
+  .lane.on .lab{font-weight:600}
+  .editmark{margin-left:auto;margin-right:12px;font-size:10.5px;color:var(--accent);display:inline-flex;align-items:center;gap:4px}
+  .lanebar-wrap{position:relative;height:40px}
+  .lanebar{position:absolute;top:14px;height:12px;border-radius:6px}
+
+  .alloc-h{display:flex;align-items:center;gap:9px;margin:26px 0 4px}
+  .alloc-h i{font-size:19px;color:var(--ink-2)}.alloc-h h2{font-size:16px;font-weight:600;margin:0}
+  .alloc-sub{font-size:12.5px;color:var(--ink-3);margin:0 0 12px 28px}
+  .ptable{border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:1540px;box-shadow:var(--shadow-card)}
+  .ptop{display:flex;justify-content:flex-end;align-items:center;gap:8px;background:#fef6ec;border-bottom:1px solid var(--line);padding:9px 18px;font-size:12.5px;color:var(--amber)}
+  .ptop .strat-of{margin-right:auto;display:inline-flex;align-items:center;gap:7px;font-size:12px}
+  .ptop b{color:#b56a12;font-size:14px}
+  .pgrid{display:grid;grid-template-columns:44px 46px 320px 96px 100px 90px 78px 96px 100px 90px 82px 100px 90px 82px}
+  .pgrid > div{padding:9px 10px;font-size:12px;border-bottom:1px solid #f1f2f5;display:flex;align-items:center}
+  .grouprow > div{background:#fafbfc;border-bottom:1px solid var(--line);color:var(--ink-3);font-size:11px;min-height:34px}
+  .headrow > div{background:#fff;border-bottom:1px solid var(--line);color:var(--ink-3);font-size:11px;font-weight:500;min-height:42px;align-items:flex-end;line-height:1.25}
+  .col-perf{background:#f7f9ff !important}
+  .pgrp{gap:10px}
+  .pthumb{width:30px;height:30px;border-radius:6px;background:#eef0f3;flex:0 0 auto}
+  .pname{font-size:12.5px;line-height:1.2}
+  .pname .meta{display:flex;gap:6px;align-items:center;color:var(--ink-3);font-size:10.5px;margin-top:3px}
+  .schip2{display:inline-flex;align-items:center;gap:5px;border-radius:6px;font-size:10.5px;padding:2px 8px;margin-top:5px;width:max-content}
+  .ic{color:var(--ink-3);font-size:16px}.ic.on{color:var(--green)}
+  .mult{color:var(--amber);font-weight:600}.amt{font-weight:600}.sub2{color:var(--ink-3);font-size:10.5px}
+  .toggle{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2)}
+  .sw{width:34px;height:19px;border-radius:11px;background:var(--accent);position:relative}
+  .sw::after{content:"";position:absolute;top:2px;right:2px;width:15px;height:15px;border-radius:50%;background:#fff}
+  .prioritized{background:#eef0f3;color:var(--ink-2);border-radius:7px;font-size:11px;padding:3px 9px}
+
+  .hub-h{display:flex;align-items:center;gap:12px;margin:20px 0 4px}
+  .hub-h h2{font-size:18px;font-weight:600;margin:0}
+  .hub-sub{font-size:12.5px;color:var(--ink-3);margin:0 0 18px}
+  .hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+  .hcard{border:1px solid var(--line);border-radius:12px;padding:16px 17px;background:#fff;cursor:pointer;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card);border-top:3px solid var(--line)}
+  .hcard:hover{border-color:#cdddff;box-shadow:0 4px 16px rgba(16,24,40,.08)}
+  .hcard .top{display:flex;align-items:center;gap:8px}
+  .hcard .top .nm{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .hcard .big{font-size:26px;font-weight:600;margin:14px 0 2px}
+  .hcard .big small{font-size:12px;color:var(--ink-3);font-weight:400}
+  .hcard .mix{font-size:12px;color:var(--ink-2);margin-top:2px}
+  .hcard .mini{display:flex;gap:16px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+  .hcard .mini div{font-size:11px;color:var(--ink-3)}
+  .hcard .mini b{display:block;font-size:14px;color:var(--ink);font-weight:600;margin-top:2px}
+  .hcard.add{border-style:dashed;border-color:#bcd2ff;border-top:1px dashed #bcd2ff;color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13.5px;gap:8px;font-weight:500;min-height:190px}
+  .stratbanner{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--line-2);border-radius:12px;margin:14px 0 18px;box-shadow:var(--shadow-card)}
+  .stratbanner .bnm{font-size:17px;font-weight:600;display:flex;align-items:center;gap:9px}
+  .stratbanner .bmeta{font-size:12px;color:var(--ink-2);margin-top:3px}
+  .stratbanner .bstat{margin-left:auto;text-align:right}
+  .stratbanner .bstat .v{font-size:20px;font-weight:600}
+  .stratbanner .bstat .l{font-size:11px;color:var(--ink-3)}
+  .backlink{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--accent);cursor:pointer;margin:18px 0 0}
+  .stance{font-size:10.5px;padding:2px 9px;border-radius:7px}
+  .stance.invest{background:#eaf1fe;color:#245bd6}.stance.optimise{background:#eaf7ef;color:#1f7d45}.stance.default{background:#f1f2f5;color:#6b7280}
+
+  .scrim{position:fixed;inset:0;background:rgba(20,24,31,.34);z-index:60;display:none}.scrim.on{display:block}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:500px;max-width:96vw;background:#fff;z-index:61;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column}
+  .drawer.on{transform:none}
+  .drawer header{padding:20px 22px 14px;border-bottom:1px solid var(--line);position:relative}
+  .drawer header .k{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);font-weight:600}
+  .drawer header h3{font-size:18px;margin:6px 0 3px;font-weight:600}
+  .drawer header p{font-size:12.5px;color:var(--ink-3);margin:0}
+  .x{position:absolute;top:16px;right:16px;border:0;background:transparent;font-size:22px;color:var(--ink-3);cursor:pointer;line-height:1}
+  .drawer .body{padding:16px 22px;overflow:auto;flex:1}
+  .fld{margin-bottom:16px}.fld label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px}
+  .fld input[type=text]{width:100%;border:1px solid var(--line-2);border-radius:8px;padding:9px 11px;font:inherit;font-size:13px}
+  .search{position:relative}.search i{position:absolute;left:10px;top:9px;color:var(--ink-3);font-size:16px}.search input{padding-left:32px !important}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0 4px}
+  .fchip{border:1px solid var(--line-2);background:#fff;border-radius:16px;padding:5px 11px;font-size:12px;color:var(--ink-2);cursor:pointer}
+  .fchip.on{background:#eef4ff;border-color:#9dc0ff;color:#245bd6;font-weight:500}
+  .callout{background:#f6f9ff;border:1px solid #dbe7ff;border-radius:10px;padding:11px 13px;font-size:12px;color:#2a4d8f;line-height:1.5;margin:6px 0 14px}
+  .grp-h{display:flex;align-items:center;gap:8px;font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-3);margin:14px 0 7px}
+  .grp-h i{font-size:15px}.grp-h .ct{margin-left:auto;text-transform:none;letter-spacing:0;font-size:11px}
+  .crow{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:7px;cursor:pointer}
+  .crow:hover{border-color:#cdddff}.crow.on{border-color:var(--accent);background:#f6f9ff}
+  .crow.claimed{cursor:not-allowed;background:var(--panel);border-style:dashed}
+  .crow.claimed .cname{color:var(--ink-3)}
+  .cbx{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line-2);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px}
+  .crow.on .cbx{background:var(--accent);border-color:var(--accent)}
+  .cinfo{flex:1;min-width:0}.cname{font-size:12.5px;line-height:1.2}
+  .cmeta{font-size:11px;color:var(--ink-3);margin-top:3px;display:flex;gap:8px;align-items:center}
+  .brandtag{background:#eef0f3;color:var(--ink-2);border-radius:6px;font-size:10.5px;padding:1px 7px}
+  .claimtag{display:inline-flex;align-items:center;gap:4px;border-radius:6px;font-size:10.5px;padding:1px 8px}
+  .empty{font-size:12px;color:var(--ink-3);padding:14px 4px;text-align:center}
+  .summ{border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-top:16px;background:var(--panel-2)}
+  .summ .row{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;color:var(--ink-2)}.summ .row b{color:var(--ink)}
+  .stance-pick{display:flex;gap:7px;margin-top:6px}
+  .sp2{flex:1;border:1px solid var(--line-2);border-radius:8px;padding:9px;font-size:12px;text-align:center;cursor:pointer;color:var(--ink-2)}
+  .sp2.on{border-color:var(--accent);background:#f6f9ff;color:#245bd6;font-weight:500}
+  .drawer footer{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end}
+  .btn{font:inherit;font-size:13px;border-radius:9px;padding:9px 16px;cursor:pointer;border:1px solid var(--line-2);background:#fff;color:var(--ink)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary[disabled]{opacity:.5;cursor:not-allowed}
+
+  .switcher{position:fixed;bottom:20px;right:20px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+  .accmini{display:flex;background:rgba(20,22,28,.9);border-radius:9px;padding:3px}
+  .accmini button{border:0;background:transparent;color:#aab0bd;font:inherit;font-size:11px;padding:4px 9px;border-radius:6px;cursor:pointer}
+  .accmini button.on{background:#e9eaee;color:#111318;font-weight:600}
+  .verpills{display:flex;align-items:center;gap:3px;background:#111318;border-radius:26px;padding:5px;box-shadow:0 6px 20px rgba(16,24,40,.28)}
+  .verpills button{min-width:30px;height:30px;padding:0 4px;border:0;border-radius:15px;background:transparent;color:#aab0bd;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+  .verpills button:hover{color:#fff}.verpills button.on{background:var(--accent);color:#fff}
+  .chint{font-size:11px;color:#6b7280;background:rgba(255,255,255,.85);border-radius:6px;padding:3px 8px}.chint b{color:#374151}
+
+  .notes{position:fixed;left:24px;bottom:22px;z-index:55;width:min(560px,calc(100vw - 340px));background:#fff;border:1px solid var(--line-2);border-radius:14px;box-shadow:0 12px 40px rgba(16,24,40,.22);padding:18px 20px;transform:translateY(24px);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+  .notes.on{transform:none;opacity:1;pointer-events:auto}
+  .notes .nk{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);font-weight:600}
+  .notes h4{font-size:16px;margin:5px 0 8px;font-weight:600}
+  .notes p{font-size:13px;line-height:1.55;color:var(--ink-2);margin:0 0 10px}
+  .notes .see{font-size:12.5px;line-height:1.5;color:var(--ink-2);background:#f6f9ff;border:1px solid #e2ecff;border-radius:9px;padding:10px 12px;margin-bottom:8px}
+  .notes .see b{color:#245bd6}
+  .notes .trade{font-size:12.5px;line-height:1.5;color:var(--ink-2);background:var(--panel);border-radius:9px;padding:10px 12px}.notes .trade b{color:var(--ink)}
+  .notes .nx{position:absolute;top:14px;right:14px;border:0;background:transparent;font-size:20px;color:var(--ink-3);cursor:pointer;line-height:1}
+  .rank{display:inline-block;font-size:10.5px;color:var(--ink-3);border:1px solid var(--line-2);border-radius:6px;padding:1px 7px;margin-left:8px;vertical-align:2px}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.31.0/tabler-icons.min.css">
+</head>
+<body>
+
+<div class="stage">
+  <div class="frame">
+    <div class="frame-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="frame-url">app.omny.co / ppc / bid-budget / sponsored-product</span></div>
+    <div class="app" id="app"></div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer"></div>
+<div class="notes" id="notes"></div>
+
+<div class="switcher">
+  <div class="accmini" id="acct"><button data-acct="simple">1 strategy</button><button data-acct="avia" class="on">3 strategies</button></div>
+  <div class="verpills" id="verpills"></div>
+  <div class="chint">Press <b>C</b> for design notes</div>
+</div>
+
+<script>
+const COLORS={
+  default:{dot:"#9aa0ab",txt:"#5b626c",bg:"#f1f2f5",bd:"#e2e4ea"},
+  cal:{dot:"#2f6bf3",txt:"#245bd6",bg:"#eaf1fe",bd:"#cdddff"},
+  bol:{dot:"#7a6fe0",txt:"#584fc0",bg:"#efeefe",bd:"#d9d5f7"},
+};
+const col=id=>COLORS[id]||COLORS.default;
+const brandStrat=b=>b==="Calmosine"?"cal":b==="Bolane"?"bol":"default";
+
+const CAMPAIGNS=[
+  {type:"SP",name:"Calmosine Sommeil Complément — B0RLHGG3NM",brand:"Calmosine",budget:120,in:"cal"},
+  {type:"SP",name:"Calmosine Allaitement Complément — B075R8PXBM",brand:"Calmosine",budget:90,in:"cal"},
+  {type:"SP",name:"Calmosine Microbiotique IMM — B0RLZQP1YG",brand:"Calmosine",budget:70,in:null},
+  {type:"SP",name:"Calmosine PostPartum Laiteme — B0F4RP778M",brand:"Calmosine",budget:60,in:null},
+  {type:"SP",name:"Bolane Spray Nasal Eau de Mer — B0RZBH5326",brand:"Bolane",budget:80,in:"bol"},
+  {type:"SP",name:"Bolane Sérum Physiologique — B08KK21P4Q",brand:"Bolane",budget:55,in:null},
+  {type:"SB",name:"Calmosine — brand defense (headline)",brand:"Calmosine",budget:140,in:"cal"},
+  {type:"SB",name:"Bolane — brand headline",brand:"Bolane",budget:75,in:null},
+];
+const BRANDS=["All","Calmosine","Bolane"];
+const STRATS={
+  simple:[{id:"default",name:"All campaigns",def:true,budget:3000,sp:6,sb:2,stance:"default",sat:62,spend:2760}],
+  avia:[
+    {id:"default",name:"All campaigns",def:true,budget:1600,sp:3,sb:1,stance:"default",sat:48,spend:1410},
+    {id:"cal",name:"Calmosine · launch",budget:900,sp:4,sb:1,stance:"invest",sat:88,spend:870},
+    {id:"bol",name:"Bolane · optimise",budget:500,sp:2,sb:1,stance:"optimise",sat:35,spend:315},
+  ],
+};
+const STANCE={invest:"Invest",optimise:"Optimise",default:"Default"};
+const NAMEOF={cal:"Calmosine · launch",bol:"Bolane · optimise",default:"All campaigns"};
+
+const VER=[
+  {id:1,name:"Inline pill row",rank:"least change",
+   note:"The smallest change. A single ‘Strategy’ pill row is added above the tabs; nothing else moves. One quiet pill when the account has a single strategy, so ordinary accounts barely notice it.",
+   see:"The active pill takes the strategy’s colour, and a colour-matched <b>scope bar sticks below the tabs</b> as you scroll — so ‘which strategy am I editing’ is always on screen. Each product row carries a coloured <b>membership chip</b>.",
+   trade:"<b>Strength:</b> lightest footprint. <b>Watch:</b> pills get busy past ~6 strategies."},
+  {id:2,name:"Header context selector",rank:"small change",
+   note:"Strategy becomes a context in the header, next to seller and country — the same mental model as ‘which account am I looking at’. No new row on the page body.",
+   see:"A sticky <b>breadcrumb</b> ‘Smartbox · es › ● Calmosine · launch’ is always pinned at the top — the header itself answers ‘which strategy’. Membership chips appear on every product row.",
+   trade:"<b>Strength:</b> most invisible; frames strategy like account/country. <b>Watch:</b> a dropdown can hide that splitting is even possible."},
+  {id:3,name:"Timeline lanes",rank:"medium change",
+   note:"Reuses the ‘Existing strategies’ timeline. Each strategy is a lane with its own budget bar and the Fixed-€ chip; selecting a lane scopes everything below.",
+   see:"The selected lane is marked <b>‘editing’</b> and coloured, and the settings block below carries a matching coloured header — the timeline selection and the settings are visibly the same strategy. Membership chips on each product row.",
+   trade:"<b>Strength:</b> reuses an existing surface, ties into reporting. <b>Watch:</b> couples switching to a time view."},
+  {id:4,name:"Strategy hub",rank:"most change",
+   note:"Changes the entry model. You land on a strategy overview — a card per strategy — and drill into one to reach the tabs. With a single strategy the hub opens it automatically.",
+   see:"Drilling in shows a full-width <b>strategy banner</b> (‘you’re in Calmosine · launch’) with its colour, budget and stance — the strongest you-are-here. The hub itself is the membership map across the account.",
+   trade:"<b>Strength:</b> clearest expression of the feature, scales best. <b>Watch:</b> biggest departure from today."},
+];
+
+let s={ver:1,acct:"simple",active:"default",drill:null,open:false,sel:new Set(),brand:"All",q:"",stance:"invest",notes:false,menu:false};
+const app=document.getElementById("app"),drawer=document.getElementById("drawer"),scrim=document.getElementById("scrim"),notesEl=document.getElementById("notes");
+const strats=()=>STRATS[s.acct];
+const active=()=>strats().find(x=>x.id===s.active)||strats()[0];
+const multi=()=>strats().length>1;
+const eur=n=>"€"+Math.round(n).toLocaleString();
+
+function rail(){return `<div class="rail"><div class="avatar">A</div>
+  <i class="ti ti-home"></i><i class="ti ti-box"></i><i class="ti ti-clipboard-list"></i><i class="ti ti-settings active-i"></i>
+  <div class="spacer"></div><i class="ti ti-user-plus"></i><i class="ti ti-book"></i><i class="ti ti-chart-bar"></i></div>`;}
+
+function header(mode){
+  const a=active(),c=col(a.id);
+  let strat="";
+  if(mode==="crumb"){
+    const items=strats().map(x=>`<div class="smi ${x.id===s.active?'on':''}" data-strat="${x.id}"><span class="sdot" style="background:${col(x.id).dot}"></span>${x.name}<span class="b">${x.sp+x.sb}</span></div>`).join("");
+    strat=`<span class="crumb">›</span>
+      <span class="selector sel-strat" data-menu="1"><span class="sdot" style="background:${c.dot}"></span><span class="nm">${a.name}</span><i class="ti ti-chevron-down"></i>
+        <div class="stratmenu ${s.menu?'on':''}">${items}<div class="smi add" data-open="1"><i class="ti ti-plus"></i>Create strategy</div></div></span>`;
+  }
+  return `<div class="topbar"><div class="h-title">PPC Management</div>
+    <span class="selector"><i class="ti ti-shopping-cart"></i>Smartbox …<span class="badge">1</span><i class="ti ti-chevron-down"></i></span>
+    <span class="selector">es<span class="badge">1</span><i class="ti ti-chevron-down"></i></span>${strat}</div>`;
+}
+function nav2(){return `<div class="nav2"><a><i class="ti ti-percentage"></i>Performance</a><a><i class="ti ti-sparkles"></i>Strategic</a><a class="on"><i class="ti ti-settings"></i>Bid &amp; Budget Settings</a></div>`;}
+
+function scopeBar(stick){
+  const a=active(),c=col(a.id);
+  if(a.def && !multi()) return `<div class="strat-hint">One strategy for the whole account, exactly as today. Split into strategies only when an account needs it.</div>`;
+  const applies=a.def?"Everything not assigned to another strategy":"Settings below apply to this strategy";
+  return `<div class="scopebar ${stick?'stick':''}" style="background:${c.bg};border-color:${c.bd}">
+    <span class="sdot" style="background:${c.dot}"></span>Editing <b>${a.name}</b>
+    <span class="sep">·</span> ${eur(a.budget)}/wk <span class="sep">·</span> ${a.sp} SP + ${a.sb} SB campaigns
+    <span class="applies">${applies}</span></div>`;
+}
+function stratBar(){
+  const pills=strats().map(a=>{const c=col(a.id);const on=a.id===s.active;
+    return `<button class="spill ${on?'on':''}" data-strat="${a.id}" ${on?`style="background:${c.dot};border-color:${c.dot}"`:''}>
+      <span class="sdot" style="background:${on?'#fff':c.dot}"></span>${a.name}<span class="b">${a.sp+a.sb}</span></button>`;}).join("");
+  return `<div class="strat-bar"><span class="lbl">Strategy</span>${pills}<button class="spill add" data-open="1"><i class="ti ti-plus" style="font-size:14px"></i>Create strategy</button></div>`;
+}
+function tabCards(){return `<div class="pause"><button><i class="ti ti-player-pause"></i>Pause budget &amp; bidding automation</button></div>
+  <div class="cards">
+    <div class="setcard"><div class="r1"><i class="ti ti-adjustments"></i>Global Bidding Rules</div><p>Define default bidding rules for SP and SB campaigns</p></div>
+    <div class="setcard on"><div class="r1"><i class="ti ti-box"></i>Sponsored Product settings</div><p>Manage budget pacing and adjust bids at product level</p></div>
+    <div class="setcard"><div class="r1"><i class="ti ti-briefcase"></i>Sponsored Brand settings</div><p>Manage budgets and adjust bids at the SB campaign level</p></div>
+  </div>`;}
+
+const WEEKS=["18 May","25 May","01 Jun","08 Jun","15 Jun","22 Jun","29 Jun","06 Jul","13 Jul","20 Jul","27 Jul","03 Aug","10 Aug"];
+function lineRow(vals,color){
+  const n=13,w=1000,h=48,pad=10,step=w/n,pts=[];
+  vals.forEach((v,i)=>{if(v!==null)pts.push([i*step+step/2,v]);});
+  const nums=pts.map(p=>p[1]),mn=Math.min(...nums,0),mx=Math.max(...nums,1);
+  const yOf=v=>h-pad-((v-mn)/((mx-mn)||1))*(h-2*pad);
+  const poly=pts.map(p=>`${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`).join(" ");
+  const dots=pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${yOf(p[1]).toFixed(1)}" r="3.4" fill="#fff" stroke="${color}" stroke-width="2"/><text x="${p[0].toFixed(1)}" y="${(yOf(p[1])-8).toFixed(1)}" text-anchor="middle" font-size="11" fill="${color}" font-weight="600">${p[1]}</text>`).join("");
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" width="100%" height="40" style="display:block"><rect x="${7*step}" y="0" width="${step}" height="${h}" fill="#f4f2fb"/><polyline points="${poly}" fill="none" stroke="${color}" stroke-width="2"/>${dots}</svg>`;
+}
+function valRow(vals){
+  return `<div style="display:grid;grid-template-columns:repeat(13,1fr);width:100%">`+vals.map((v,i)=>{
+    const c=(typeof v==="string"&&v[0]==="+")?"var(--green)":(typeof v==="string"&&v[0]==="-")?"var(--red)":"var(--ink)";
+    return `<div style="font-size:11.5px;font-weight:600;color:${c};padding:0 6px;${i===7?'background:#f4f2fb;':''}">${v===null?'':v}</div>`;}).join("")+`</div>`;
+}
+function standardTimeline(){
+  const a=active();
+  const budget=[null,null,1,74,-23,-23,-23,null,null,null,null,null,null];
+  const spend =[null,null,78,0,0,0,0,null,null,null,null,null,null];
+  const prod  =[null,null,'+15','15','-1','14',null,null,null,null,null,null,null];
+  return `<div class="tl">
+    <div class="tlrow"><div class="lab"></div><div class="wkhead">${WEEKS.map((w,i)=>`<div class="${i===7?'now':''}">${w}</div>`).join("")}</div></div>
+    <div class="tlrow"><div class="lab">Strategy</div><div style="position:relative;height:40px"><div style="position:absolute;left:41%;top:9px"><span class="chip-fixed"><i class="ti ti-pin"></i>Fixed ${eur(a.budget)}</span></div></div></div>
+    <div class="tlrow"><div class="lab">Weekly budget available (€)</div>${lineRow(budget,"var(--blue-line)")}</div>
+    <div class="tlrow"><div class="lab">Spend (€)</div>${lineRow(spend,"var(--purple)")}</div>
+    <div class="tlrow"><div class="lab">Budget saturation</div><div style="position:relative;height:36px"><span style="position:absolute;left:16%;top:14px;width:9px;height:9px;border-radius:50%;background:var(--green)"></span></div></div>
+    <div class="tlrow"><div class="lab">Products activated</div>${valRow(prod)}</div>
+  </div>`;
+}
+function laneTimeline(){
+  const spans={default:[2,7],cal:[2,8],bol:[3,7]};
+  const lanes=strats().map(a=>{const c=col(a.id),sp=spans[a.id]||[2,7],step=100/13;
+    const left=sp[0]*step,width=(sp[1]-sp[0]+1)*step;const on=a.id===s.active;
+    return `<div class="lane ${on?'on':''}" data-strat="${a.id}">
+      <div class="lab"><span class="sdot" style="background:${c.dot}"></span>${a.name}${on?'<span class="editmark"><i class="ti ti-pencil"></i>editing</span>':''}</div>
+      <div class="lanebar-wrap"><div class="lanebar" style="left:${left}%;width:${width}%;background:${c.dot}"></div>
+        <div style="position:absolute;left:${left}%;top:-1px;font-size:10.5px;color:var(--ink-3);padding-left:2px">${eur(a.budget)}/wk</div></div></div>`;}).join("");
+  return `<div class="tl"><div class="tlrow"><div class="lab" style="font-weight:500;color:var(--ink)">Strategy</div><div class="wkhead">${WEEKS.map((w,i)=>`<div class="${i===7?'now':''}">${w}</div>`).join("")}</div></div>${lanes}</div>`;
+}
+
+function table(){
+  const a=active(),c=col(a.id);
+  const items=[
+    {n:"Calmosine Sommeil Complément",id:"B0RLHGG3NM",np:"€12.4",rev:"18%",m:41,cur:"€49.2",act:true,brand:"Calmosine"},
+    {n:"Calmosine Allaitement Complément",id:"B075R8PXBM",np:"€8.1",rev:"12%",m:38,cur:"€24.6",act:false,brand:"Calmosine"},
+    {n:"Calmosine Microbiotique IMM",id:"B0RLZQP1YG",np:"€5.7",rev:"9%",m:41,cur:"€18.0",act:false,brand:"Calmosine"},
+    {n:"Bolane Spray Nasal Eau de Mer",id:"B0RZBH5326",np:"€9.9",rev:"14%",m:44,cur:"€31.4",act:false,brand:"Bolane"},
+    {n:"Bolane Sérum Physiologique",id:"B08KK21P4Q",np:"€4.3",rev:"7%",m:40,cur:"€12.8",act:false,brand:"Bolane"},
+  ];
+  const per=Math.round(a.budget/items.length);
+  const chip=(brand)=>{ if(!multi()) return ''; const cc=col(brandStrat(brand)); return `<span class="schip2" style="background:${cc.bg};color:${cc.txt}"><span class="sdot" style="background:${cc.dot}"></span>${NAMEOF[brandStrat(brand)]}</span>`; };
+  const cell=(x,e="")=>`<div class="${e}">${x}</div>`;
+  const rows=items.map(it=>`
+    ${cell(`<i class="ti ti-player-${it.act?'pause':'play'} ic ${it.act?'on':''}"></i>`)}
+    ${cell(`<i class="ti ti-ban ic"></i>`)}
+    <div class="pgrp"><span class="pthumb"></span><div class="pname">${it.n}<div class="meta">es · 1 · ${it.id}</div>${chip(it.brand)}</div></div>
+    ${cell(it.np)}${cell(it.rev)}${cell(`<b>${it.m}%</b>`)}${cell(`<span class="mult">x1.0</span>`)}
+    <div>${it.cur}<div class="sub2">↑ 12%</div></div>
+    <div class="col-perf"><div><span class="amt">${eur(per)}</span><div class="sub2">of ${eur(per+14)} max</div></div></div>
+    <div class="col-perf">0%</div><div class="col-perf sub2">—</div>
+    <div><span class="amt">${eur(Math.round(per*0.6))}</span></div><div>0%</div><div class="sub2">—</div>`).join("");
+  const totalLabel=multi()?`<span class="strat-of"><span class="sdot" style="background:${c.dot}"></span>Total for <b style="color:${c.txt};font-size:12px">${a.name}</b></span>`:'';
+  return `<div class="alloc-h"><i class="ti ti-building-bank"></i><h2>Latest Budget Allocation per Product</h2></div>
+  <p class="alloc-sub">Review the latest budget allocation results below and adjust as needed${a.def?'':' · scoped to '+a.name}.</p>
+  <div style="overflow-x:auto"><div class="ptable">
+    <div class="ptop">${totalLabel}<span>Total weekly budget allocated</span><b>${eur(a.budget)}</b></div>
+    <div class="pgrid grouprow"><div></div><div></div><div></div><div></div><div></div>
+      <div style="grid-column:6 / 9;justify-content:flex-end;gap:9px"><span class="prioritized">Prioritized by</span><span class="toggle">ROAS <span class="sw"></span> ACOS</span></div>
+      <div class="col-perf" style="grid-column:9 / 12;font-weight:600;color:var(--ink)">Performance Targeting</div>
+      <div style="grid-column:12 / 15;font-weight:600;color:var(--ink)">Discovery Targeting</div></div>
+    <div class="pgrid headrow"><div></div><div></div><div>Product Groups</div><div>Ads Net profit 4W</div><div>4-Week Rev. Share</div><div>Products Margin</div><div>Bid Mult.</div><div>Current · 4W</div>
+      <div class="col-perf">Weekly Budget</div><div class="col-perf">% of max spend pot.</div><div class="col-perf">vs. last week</div>
+      <div>Weekly Budget</div><div>% of max spend pot.</div><div>vs. last week</div></div>
+    <div class="pgrid">${rows}</div>
+  </div></div>`;
+}
+
+function hubView(){
+  const cards=strats().map(a=>{const c=col(a.id);
+    return `<div class="hcard" data-drill="${a.id}" style="border-top-color:${c.dot}">
+      <div class="top"><span class="nm"><span class="sdot" style="background:${c.dot}"></span>${a.name}</span><span class="stance ${a.stance}" style="margin-left:auto">${STANCE[a.stance]}</span></div>
+      <div class="big">${eur(a.budget)}<small> /week</small></div>
+      <div class="mix">${a.sp} Sponsored Product + ${a.sb} Sponsored Brand campaigns</div>
+      <div class="mini"><div>Spend<b>${eur(a.spend)}</b></div><div>Saturation<b>${a.sat}%</b></div><div>Campaigns<b>${a.sp+a.sb}</b></div></div></div>`;}).join("");
+  return `<div class="hub-h"><h2>Strategies</h2></div>
+    <p class="hub-sub">Each strategy runs its own campaigns with its own bidding rules and budget, inside this one Amazon account. Open one to manage its settings.</p>
+    <div class="hub">${cards}<div class="hcard add" data-open="1"><i class="ti ti-plus" style="font-size:18px"></i>Create strategy</div></div>`;
+}
+function stratBanner(){
+  const a=active(),c=col(a.id);
+  return `<div class="stratbanner" style="background:${c.bg};border-color:${c.bd}">
+    <div><div class="bnm"><span class="sdot" style="background:${c.dot};width:12px;height:12px"></span>${a.name}<span class="stance ${a.stance}">${STANCE[a.stance]}</span></div>
+      <div class="bmeta">${a.sp} Sponsored Product + ${a.sb} Sponsored Brand campaigns · you’re editing this strategy</div></div>
+    <div class="bstat"><div class="v">${eur(a.budget)}</div><div class="l">weekly budget</div></div></div>`;
+}
+
+function existing(){return `<div class="section-h"><h2>Existing strategies</h2><span class="cw"><i class="ti ti-current-location"></i>Go to current week</span><span class="grow"></span></div>${standardTimeline()}`;}
+
+function render(){
+  const v=s.ver;let body="";
+  if(v===1){ body=`<div class="apphead">${header()}${nav2()}</div>`+stratBar()+scopeBar(true)+tabCards()+existing()+table(); }
+  else if(v===2){ body=`<div class="apphead stick">${header("crumb")}${nav2()}</div>`+scopeBar(false)+tabCards()+existing()+table(); }
+  else if(v===3){
+    const a=active(),c=col(a.id);
+    const editHead = (a.def&&!multi())?'' : `<div class="editing-head" style="background:${c.bg};border-color:${c.bd}"><span class="sdot" style="background:${c.dot}"></span>Editing <b>&nbsp;${a.name}</b><span class="tag">scoped from the lane above</span></div>`;
+    const wrapOpen = editHead? `<div class="settings-wrap" style="border-color:${c.bd}">` : '';
+    const wrapClose = editHead? `</div>` : '';
+    body=`<div class="apphead">${header()}${nav2()}</div>`+
+      `<div class="section-h"><h2>Existing strategies</h2><span class="cw"><i class="ti ti-current-location"></i>Go to current week</span><span class="grow"></span><button class="btn-strat" data-open="1"><i class="ti ti-plus"></i>Create strategy</button></div>`+
+      laneTimeline()+editHead+wrapOpen+tabCards()+table()+wrapClose;
+  }
+  else if(v===4){
+    if(!multi() && s.drill===null) s.drill=strats()[0].id;
+    if(s.drill===null){ body=`<div class="apphead">${header()}${nav2()}</div>`+hubView(); }
+    else { s.active=s.drill; body=`<div class="apphead">${header()}${nav2()}</div>`+`<div class="backlink" data-back="1"><i class="ti ti-arrow-left"></i>All strategies</div>`+stratBanner()+tabCards()+existing()+table(); }
+  }
+  app.innerHTML=rail()+`<div class="main">${body}</div>`;
+  bind();renderNotes();
+}
+function bind(){
+  app.querySelectorAll("[data-strat]").forEach(el=>el.onclick=e=>{e.stopPropagation();s.active=el.dataset.strat;s.menu=false;render();});
+  app.querySelectorAll("[data-open]").forEach(el=>el.onclick=e=>{e.stopPropagation();openDrawer();});
+  app.querySelectorAll("[data-drill]").forEach(el=>el.onclick=()=>{s.drill=el.dataset.drill;render();});
+  app.querySelectorAll("[data-back]").forEach(el=>el.onclick=()=>{s.drill=null;render();});
+  app.querySelectorAll("[data-menu]").forEach(el=>el.onclick=e=>{e.stopPropagation();s.menu=!s.menu;render();});
+}
+document.addEventListener("click",()=>{if(s.menu){s.menu=false;render();}});
+
+function openDrawer(){s.open=true;s.sel=new Set();s.brand="All";s.q="";s.stance="invest";renderDrawer();scrim.classList.add("on");drawer.classList.add("on");}
+function closeDrawer(){s.open=false;scrim.classList.remove("on");drawer.classList.remove("on");}
+const assignedOf=c=>(s.acct==="avia")?c.in:null;
+const visible=()=>CAMPAIGNS.filter(c=>(s.brand==="All"||c.brand===s.brand)&&(s.q===""||c.name.toLowerCase().includes(s.q.toLowerCase())));
+const selArr=()=>CAMPAIGNS.filter(c=>s.sel.has(c.name));
+function renderDrawer(){
+  const vis=visible(),sp=vis.filter(c=>c.type==="SP"),sb=vis.filter(c=>c.type==="SB");
+  const chosen=selArr(),nSP=chosen.filter(c=>c.type==="SP").length,nSB=chosen.filter(c=>c.type==="SB").length,sum=chosen.reduce((t,c)=>t+c.budget,0);
+  const crow=c=>{const claimed=assignedOf(c);if(claimed){const cc=col(claimed);
+    return `<div class="crow claimed"><span class="cbx"><i class="ti ti-lock" style="color:var(--ink-3);font-size:12px"></i></span>
+      <div class="cinfo"><div class="cname">${c.name}</div><div class="cmeta"><span class="brandtag">${c.brand}</span>
+        <span class="claimtag" style="background:${cc.bg};color:${cc.txt}"><span class="sdot" style="background:${cc.dot}"></span>in ${NAMEOF[claimed]}</span></div></div></div>`;}
+    return `<div class="crow ${s.sel.has(c.name)?'on':''}" data-camp="${c.name}"><span class="cbx">${s.sel.has(c.name)?'<i class="ti ti-check"></i>':''}</span>
+      <div class="cinfo"><div class="cname">${c.name}</div><div class="cmeta"><span class="brandtag">${c.brand}</span><span>${eur(c.budget)}/wk</span></div></div></div>`;};
+  const grp=(icon,title,arr)=>`<div class="grp-h"><i class="ti ${icon}"></i>${title}<span class="ct">${arr.length} shown</span></div>${arr.length?arr.map(crow).join(""):'<div class="empty">No campaigns match this filter.</div>'}`;
+  drawer.innerHTML=`<header><button class="x" id="dx">×</button><div class="k">This account · Smartbox · es</div><h3>Create a strategy</h3>
+      <p>A strategy is a group of campaigns with its own bidding rules and budget.</p></header>
+    <div class="body">
+      <div class="fld"><label>Strategy name</label><input type="text" placeholder="Calmosine · launch"></div>
+      <div class="fld"><label>Add campaigns to this strategy</label>
+        <div class="search"><i class="ti ti-search"></i><input type="text" id="q" placeholder="Search campaigns by name or ASIN…" value="${s.q}"></div>
+        <div class="filters">${BRANDS.map(b=>`<span class="fchip ${s.brand===b?'on':''}" data-brand="${b}">${b==="All"?"All brands":b}</span>`).join("")}</div>
+        <div class="callout"><i class="ti ti-info-circle" style="vertical-align:-2px"></i> You add whole <b>campaigns</b> — Sponsored Product and Sponsored Brand. Greyed campaigns already belong to another strategy: a campaign lives in one strategy at a time.</div>
+        ${grp("ti-box","Sponsored Products",sp)}
+        ${grp("ti-briefcase","Sponsored Brands",sb)}
+      </div>
+      <div class="fld"><label>Investment stance</label><div class="stance-pick">
+        <div class="sp2 ${s.stance==='invest'?'on':''}" data-stance="invest">Invest to grow</div>
+        <div class="sp2 ${s.stance==='optimise'?'on':''}" data-stance="optimise">Optimise · save</div></div></div>
+      <div class="summ">
+        <div class="row"><span>Campaigns in this strategy</span><b>${chosen.length?`${chosen.length} · ${nSP} SP + ${nSB} SB`:'—'}</b></div>
+        <div class="row"><span>Weekly budget (sum of campaigns)</span><b>${chosen.length?eur(sum):'—'}</b></div>
+        <div class="row"><span>Moved out of “All campaigns”</span><b>${chosen.length?'−'+chosen.length:'—'}</b></div>
+      </div>
+    </div>
+    <footer><button class="btn" id="dcancel">Cancel</button><button class="btn primary" id="dcreate" ${chosen.length?'':'disabled'}>Create strategy</button></footer>`;
+  document.getElementById("dx").onclick=closeDrawer;document.getElementById("dcancel").onclick=closeDrawer;
+  document.getElementById("dcreate").onclick=()=>{if(selArr().length)closeDrawer();};
+  const q=document.getElementById("q");q.oninput=e=>{s.q=e.target.value;const p=q.selectionStart;renderDrawer();const nq=document.getElementById("q");nq.focus();nq.setSelectionRange(p,p);};
+  drawer.querySelectorAll("[data-brand]").forEach(el=>el.onclick=()=>{s.brand=el.dataset.brand;renderDrawer();});
+  drawer.querySelectorAll("[data-camp]").forEach(el=>el.onclick=()=>{const n=el.dataset.camp;s.sel.has(n)?s.sel.delete(n):s.sel.add(n);renderDrawer();});
+  drawer.querySelectorAll("[data-stance]").forEach(el=>el.onclick=()=>{s.stance=el.dataset.stance;renderDrawer();});
+}
+
+function renderNotes(){
+  const v=VER[s.ver-1];
+  notesEl.innerHTML=`<button class="nx" id="nx">×</button><div class="nk">Version ${v.id} of 4<span class="rank">${v.rank}</span></div>
+    <h4>${v.name}</h4><p>${v.note}</p><div class="see"><b>Which strategy is applied:</b> ${v.see}</div><div class="trade">${v.trade}</div>`;
+  document.getElementById("nx").onclick=()=>{s.notes=false;notesEl.classList.remove("on");};
+}
+function toggleNotes(){s.notes=!s.notes;notesEl.classList.toggle("on",s.notes);}
+
+const verpills=document.getElementById("verpills");
+verpills.innerHTML=VER.map(v=>`<button data-ver="${v.id}" class="${v.id===1?'on':''}" title="${v.id}. ${v.name}">${v.id}</button>`).join("");
+verpills.querySelectorAll("button").forEach(b=>b.onclick=()=>{s.ver=+b.dataset.ver;s.drill=null;s.active="default";s.menu=false;
+  verpills.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));render();});
+document.getElementById("acct").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.acct=b.dataset.acct;s.active="default";s.drill=null;s.menu=false;
+  document.getElementById("acct").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));render();});
+scrim.onclick=closeDrawer;
+document.addEventListener("keydown",e=>{
+  if(e.key==="c"||e.key==="C"){const t=(e.target.tagName||"").toUpperCase();if(t==="INPUT"||t==="TEXTAREA")return;e.preventDefault();toggleNotes();}
+  if(e.key==="Escape"){s.notes=false;notesEl.classList.remove("on");closeDrawer();}
+});
+render();
+</script>
+</body>
+</html>
