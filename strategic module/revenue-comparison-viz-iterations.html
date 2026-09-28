@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Omny — Revenue comparison viz, iterations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fafafa; --card:#ffffff; --border:#e4e4e7; --fg:#18181b; --muted:#71717a; --subtle:#a1a1aa;
+    --b1:#1e5fae; --b2:#5b93d1; --b3:#a9c8e8; --b4:#d7e5f4; --btxt:#14406e;
+    --g1:#71717a; --g2:#a1a1aa; --g3:#d4d4d8; --g4:#ececee; --gtxt:#3f3f46;
+    --up:#0f766e; --upbg:#f0fdfa; --dn:#b91c1c; --dnbg:#fef2f2;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Figtree',-apple-system,sans-serif;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .page{max-width:920px;margin:0 auto;padding:56px 32px 80px;}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  h1{font-size:29px;font-weight:600;letter-spacing:-.02em;line-height:1.2;margin-bottom:10px;}
+  .lede{color:var(--muted);font-size:15.5px;max-width:660px;margin-bottom:6px;}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--subtle);margin-bottom:36px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:48px;}
+  .chip{font-size:12.5px;padding:4px 12px;border-radius:9999px;border:1px solid var(--border);background:var(--card);color:var(--gtxt);}
+  .iter{margin-bottom:46px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px 28px 22px;}
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+  .imeta{padding:14px 10px 0;font-size:13px;color:var(--subtle);max-width:720px;line-height:1.6;}
+  .imeta .ie{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px;}
+  .imeta strong{color:var(--muted);font-weight:600;}
+  .hint{font-size:12px;color:var(--subtle);margin-top:10px;}
+  .switch{display:inline-flex;border:1px solid var(--border);border-radius:9999px;padding:3px;background:var(--bg);flex-shrink:0;}
+  .switch button{font-family:'Figtree',sans-serif;font-size:12.5px;font-weight:500;border:none;background:transparent;color:var(--muted);padding:5px 14px;border-radius:9999px;cursor:pointer;}
+  .switch button.on{background:var(--fg);color:#fff;}
+  .headline{font-size:18px;font-weight:600;line-height:1.35;margin-bottom:2px;}
+  .headline .pos{color:var(--up);} .headline .neg{color:var(--b1);}
+  .subline{font-size:13px;color:var(--subtle);margin-bottom:18px;}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:12px;}
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .sw{width:10px;height:10px;border-radius:2px;display:inline-block;}
+  .note{font-size:12.5px;color:var(--subtle);margin-top:14px;padding-top:12px;border-top:1px solid var(--border);}
+  svg{display:block;width:100%;height:auto;}
+  svg text{font-family:'Figtree',sans-serif;}
+  .delta-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .dchip{font-size:12px;font-weight:500;padding:3px 10px;border-radius:9999px;}
+  .dchip.up{background:var(--upbg);color:var(--up);} .dchip.dn{background:var(--dnbg);color:var(--dn);}
+  .dchip.hl{outline:1.5px solid var(--b1);}
+  #tip{position:absolute;display:none;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12.5px;min-width:190px;box-shadow:0 4px 16px rgba(0,0,0,.08);pointer-events:none;z-index:50;}
+  #tip .t-name{font-weight:600;margin-bottom:3px;}
+  #tip .t-mut{color:var(--subtle);font-size:11.5px;}
+  .row5{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+  .row5 .lab{font-family:var(--mono);font-size:11.5px;color:var(--subtle);width:70px;flex-shrink:0;text-align:right;}
+  .row5 .bar{flex:1;display:flex;gap:2px;border-radius:5px;overflow:hidden;}
+  .row5 .seg{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:500;}
+  .row5 .tot{font-family:var(--mono);font-size:11.5px;color:var(--subtle);width:52px;flex-shrink:0;}
+  .exbtn{font-family:'Figtree',sans-serif;font-size:13px;font-weight:500;border:1px solid var(--border);background:#fff;color:var(--fg);padding:7px 16px;border-radius:9999px;cursor:pointer;margin-top:6px;}
+  .exbtn:hover{background:var(--bg);}
+  .footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--border);font-family:var(--mono);font-size:12px;color:var(--subtle);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+  @media print{body{background:#fff;} .iter{break-inside:avoid;}}
+</style>
+</head>
+<body>
+<div id="tip"></div>
+<div class="page">
+
+  <div class="eyebrow">Omny · Combined dashboard · Data viz exploration · v1</div>
+  <h1>Period-comparison visualization — iterations</h1>
+  <p class="lede">Five ways to read one story: revenue grew, but the segment that matters is declining. Current period uses a blue monochrome ramp — the highlighted segment is always the darkest stop. The reference period is fully gray. Every iteration carries the same reference switcher.</p>
+  <p class="meta">Example data: Q3 2026 revenue, breakdown Organic / Sponsored / External traffic / Subscribe &amp; Save · Tcules — Sept 2026 · for discussion</p>
+
+  <div class="chips">
+    <span class="chip">Period vs reference</span>
+    <span class="chip">Shared breakdown</span>
+    <span class="chip">Trend per segment</span>
+    <span class="chip">One highlighted segment</span>
+    <span class="chip">Headline insight</span>
+    <span class="chip">Detail on hover / expand</span>
+    <span class="chip">Horizontal orientation</span>
+    <span class="chip">Minimal controls</span>
+  </div>
+
+  <div class="iter">
+    <div class="card">
+      <div class="card-head">
+        <div><p class="headline" id="h1"></p><p class="subline" id="s1" style="margin-bottom:0;"></p></div>
+        <div class="switch" data-sw><button data-m="prev">vs previous period</button><button data-m="ly">vs last year</button></div>
+      </div>
+      <div id="v1"></div>
+      <div class="legend"><span><span class="sw" style="background:var(--b1)"></span>Organic — highlighted</span><span><span class="sw" style="background:var(--b3)"></span>Other segments, current</span><span><span class="sw" style="background:var(--g3)"></span>Reference period</span></div>
+    </div>
+    <div class="imeta"><span class="ie">Iteration 1 · Linked share-shift bars</span><strong>Optimizes for:</strong> one-glance reading in a sales call — the flow bands make the share shift physical, the key segment visibly narrows without reading a number. <strong>Trade-off:</strong> bands encode share, not euros; absolute growth lives only in the headline and edge totals. Weakens past ~5 segments. Hover a segment for value, share shift and the period path.</div>
+  </div>
+
+  <div class="iter">
+    <div class="card">
+      <div class="card-head">
+        <div><p class="headline" id="h2b"></p><p class="subline" id="s2" style="margin-bottom:0;"></p></div>
+        <div class="switch" data-sw><button data-m="prev">vs previous period</button><button data-m="ly">vs last year</button></div>
+      </div>
+      <div id="v2"></div>
+      <div class="legend"><span><span class="sw" style="background:var(--b1)"></span>Current period</span><span><span class="sw" style="background:var(--g3)"></span>Reference period</span></div>
+    </div>
+    <div class="imeta"><span class="ie">Iteration 2 · Segment ledger</span><strong>Optimizes for:</strong> answering "did each part perform better or worse" in euros — the health question is about value, not share. Trend chips are always visible, no hover needed. Scales cleanly to 6–7 segments. <strong>Trade-off:</strong> the part-to-whole reading disappears; requires row-by-row scanning rather than one gestalt. Hover a row for the period path.</div>
+  </div>
+
+  <div class="iter">
+    <div class="card">
+      <div class="card-head">
+        <div><p class="headline" id="h3"></p><p class="subline" id="s3" style="margin-bottom:0;"></p></div>
+        <div class="switch" data-sw><button data-m="prev">vs previous period</button><button data-m="ly">vs last year</button></div>
+      </div>
+      <div id="v3"></div>
+      <div class="legend"><span><span class="sw" style="background:var(--b1)"></span>Current total · highlighted segment</span><span><span class="sw" style="background:var(--b3)"></span>Other segments</span><span><span class="sw" style="background:var(--g3)"></span>Reference total</span></div>
+      <p class="hint" id="n3"></p>
+    </div>
+    <div class="imeta"><span class="ie">Iteration 3 · Totals with segment deltas</span><strong>Optimizes for:</strong> the simplest possible expansion — two aggregated totals, current always on top, and on click each segment appears as its plain difference vs the reference on the same axis. Direction is position: left of zero declined, right grew. No cumulative arithmetic to explain. <strong>Trade-off:</strong> deltas are small next to the totals, so the axis under-uses its range; shares aren't shown.</div>
+  </div>
+
+  <div class="iter">
+    <div class="card">
+      <div class="card-head">
+        <div><p class="headline" id="h4"></p><p class="subline" id="s4" style="margin-bottom:0;"></p></div>
+        <div class="switch" data-sw><button data-m="prev">vs previous period</button><button data-m="ly">vs last year</button></div>
+      </div>
+      <div id="v4"></div>
+    </div>
+    <div class="imeta"><span class="ie">Iteration 4 · Share slope panel</span><strong>Optimizes for:</strong> direction — every segment's movement is a literal slope, and the crossing point (sponsored overtaking organic) is impossible to miss. The most compact of the five. <strong>Trade-off:</strong> only two data points per segment; magnitudes are positional, not sized, so it's weakest at communicating euros. Hover a line for values; left axis is the reference, right is current.</div>
+  </div>
+
+  <div class="iter">
+    <div class="card">
+      <div class="card-head">
+        <div><p class="headline" id="h5"></p><p class="subline" id="s5" style="margin-bottom:0;"></p></div>
+        <div class="switch" data-sw><button data-m="prev">vs previous period</button><button data-m="ly">vs last year</button></div>
+      </div>
+      <div id="v5"></div>
+      <div class="delta-chips" id="d5"></div>
+      <button class="exbtn" id="ex5">Show period-by-period path</button>
+      <div class="legend"><span><span class="sw" style="background:var(--b1)"></span>Organic — highlighted</span><span><span class="sw" style="background:var(--b3)"></span>Other segments, current</span><span><span class="sw" style="background:var(--g3)"></span>Reference &amp; intermediate periods</span></div>
+    </div>
+    <div class="imeta"><span class="ie">Iteration 5 · Stacked pair with period path</span><strong>Optimizes for:</strong> the collapsed/expanded interaction in the brief — light view is two bars, current vs reference; expanding inserts every intermediate period between them so the path is persistent on screen, not trapped in a tooltip. Survives projectors and screen shares. <strong>Trade-off:</strong> expanded state is tall; intermediate bars repeat the same encoding, so it rewards scanning more than glancing.</div>
+  </div>
+
+  <div class="footer"><span>Tcules × Primelis — Omny · combined dashboard exploration</span><span>v1 · Claude-assisted · Sept 2026</span></div>
+</div>
+
+<script>
+const SEGS=['Organic','Sponsored','External traffic','Subscribe & save'];
+const HL=0;
+const CUR={label:'Q3 2026',total:2.60,vals:[1.07,0.99,0.36,0.18],shares:[41,38,14,7]};
+const REFS={
+  prev:{label:'Q2 2026',total:2.40,vals:[1.13,0.77,0.31,0.19],shares:[47,32,13,8],
+    pathLabel:'Apr – Sep 2026, monthly',
+    path:[['Apr',[48,31,13,8]],['May',[47,32,13,8]],['Jun',[46,33,13,8]],['Jul',[44,35,14,7]],['Aug',[42,37,14,7]],['Sep',[41,38,14,7]]],
+    mids:[['Aug 2026',[42,37,14,7],2.58],['Jul 2026',[44,35,14,7],2.52],['Jun 2026',[46,33,13,8],2.46],['May 2026',[47,32,13,8],2.42]]},
+  ly:{label:'Q3 2025',total:2.20,vals:[1.14,0.62,0.26,0.18],shares:[52,28,12,8],
+    pathLabel:'Q3 2025 – Q3 2026, quarterly',
+    path:[['Q3·25',[52,28,12,8]],['Q4·25',[50,29,13,8]],['Q1·26',[48,31,13,8]],['Q2·26',[47,32,13,8]],['Q3·26',[41,38,14,7]]],
+    mids:[['Q2 2026',[47,32,13,8],2.40],['Q1 2026',[48,31,13,8],2.34],['Q4 2025',[50,29,13,8],2.28]]}
+};
+const CURC=['#1e5fae','#5b93d1','#a9c8e8','#d7e5f4'];
+const CURT=['#ffffff','#ffffff','#14406e','#14406e'];
+const REFC=['#a1a1aa','#c8c8cd','#d4d4d8','#e4e4e7'];
+const REFT=['#ffffff','#3f3f46','#3f3f46','#3f3f46'];
+let mode='prev', open5=false;
+const eur=v=>'€'+v.toFixed(2)+'M';
+const pct=(a,b)=>{const d=(a-b)/b*100;return (d>0?'+':'')+d.toFixed(0)+'%';};
+
+const tip=document.getElementById('tip');
+function showTip(ev,html){tip.innerHTML=html;tip.style.display='block';moveTip(ev);}
+function moveTip(ev){let x=ev.pageX+14,y=ev.pageY+10;if(x+210>document.body.clientWidth)x=ev.pageX-220;tip.style.left=x+'px';tip.style.top=y+'px';}
+function hideTip(){tip.style.display='none';}
+function spark(shares,hlOnly){
+  const mx=Math.max(...shares);
+  return '<div style="height:40px;display:flex;align-items:flex-end;margin-top:6px;">'+shares.map(v=>`<span style="display:inline-block;width:12px;height:${(v/mx*36).toFixed(0)}px;background:${hlOnly?'#1e5fae':'#a1a1aa'};border-radius:2px 2px 0 0;margin-right:2px;"></span>`).join('')+'</div>';
+}
+function tipHTML(i,ref){
+  const d=(CUR.vals[i]-ref.vals[i])/ref.vals[i]*100;
+  const p=REFS[mode].path.map(m=>m[1][i]);
+  return `<div class="t-name">${SEGS[i]}</div>
+    <div>${eur(ref.vals[i])} → ${eur(CUR.vals[i])} <b style="color:${d<0?'#b91c1c':'#0f766e'}">${d>0?'+':''}${d.toFixed(0)}%</b></div>
+    <div class="t-mut">Share ${ref.shares[i]}% → ${CUR.shares[i]}%</div>
+    ${spark(p,i===HL)}<div class="t-mut">${REFS[mode].pathLabel} · share</div>`;
+}
+function bindTip(el,html){
+  el.addEventListener('mousemove',ev=>{showTip(ev,typeof html==='function'?html():html);});
+  el.addEventListener('mouseleave',hideTip);
+}
+
+function ns(t,a){const e=document.createElementNS('http://www.w3.org/2000/svg',t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function stext(x,y,s,size,fill,anchor,w){const t=ns('text',{x,y,'font-size':size,fill,'text-anchor':anchor||'start','font-weight':w||400});t.textContent=s;return t;}
+
+function headline(idH,idS,ref){
+  const dT=(CUR.total-ref.total)/ref.total*100;
+  const dO=(CUR.vals[HL]-ref.vals[HL])/ref.vals[HL]*100;
+  document.getElementById(idH).innerHTML=`Revenue grew <span class="pos">+${dT.toFixed(0)}%</span>, but organic revenue declined <span class="neg">${dO.toFixed(0)}%</span>`;
+  document.getElementById(idS).textContent=`${CUR.label} vs ${ref.label} · sponsored growth is masking an organic decline`;
+}
+
+function render1(){
+  const ref=REFS[mode]; headline('h1','s1',ref);
+  const host=document.getElementById('v1'); host.innerHTML='';
+  const W=840,x0=96,bw=W-x0-80,bh=38,y1=28,y2=150;
+  const svg=ns('svg',{viewBox:`0 0 ${W} 210`});
+  svg.appendChild(stext(x0-10,y1+bh/2+4,CUR.label,13,'#3f3f46','end',600));
+  svg.appendChild(stext(x0-10,y2+bh/2+4,ref.label,13,'#a1a1aa','end',400));
+  svg.appendChild(stext(x0+bw+10,y1+bh/2+4,eur(CUR.total),13,'#3f3f46','start',600));
+  svg.appendChild(stext(x0+bw+10,y2+bh/2+4,eur(ref.total),13,'#a1a1aa','start',400));
+  let cx=0,rx=0;
+  SEGS.forEach((s,i)=>{
+    const cw=CUR.shares[i]/100*bw, rw=ref.shares[i]/100*bw;
+    svg.appendChild(ns('polygon',{points:`${x0+cx},${y1+bh+2} ${x0+cx+cw},${y1+bh+2} ${x0+rx+rw},${y2-2} ${x0+rx},${y2-2}`,fill:i===HL?'#1e5fae':'#a9c8e8',opacity:i===HL?0.16:0.10}));
+    const rc=ns('rect',{x:x0+cx+1,y:y1,width:Math.max(cw-2,1),height:bh,rx:4,fill:CURC[i]});
+    const rr=ns('rect',{x:x0+rx+1,y:y2,width:Math.max(rw-2,1),height:bh,rx:4,fill:REFC[i]});
+    [rc,rr].forEach(r=>{r.style.cursor='pointer';bindTip(r,()=>tipHTML(i,REFS[mode]));svg.appendChild(r);});
+    if(cw>44)svg.appendChild(stext(x0+cx+cw/2,y1+bh/2+4,CUR.shares[i]+'%',12,CURT[i],'middle',500));
+    if(rw>44)svg.appendChild(stext(x0+rx+rw/2,y2+bh/2+4,ref.shares[i]+'%',12,REFT[i],'middle',400));
+    if(cw>70)svg.appendChild(stext(x0+cx+cw/2,y1-9,s,11.5,'#a1a1aa','middle'));
+    cx+=cw;rx+=rw;
+  });
+  host.appendChild(svg);
+}
+
+function render2(){
+  const ref=REFS[mode]; headline('h2b','s2',ref);
+  const host=document.getElementById('v2'); host.innerHTML='';
+  const maxV=1.25;
+  SEGS.forEach((s,i)=>{
+    const d=(CUR.vals[i]-ref.vals[i])/ref.vals[i]*100;
+    const row=document.createElement('div');
+    row.style.cssText=`padding:13px 14px;border-bottom:1px solid var(--border);${i===HL?'background:#f2f7fc;border-radius:10px;border-bottom:none;margin:2px 0;':''}`;
+    row.innerHTML=`
+     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;flex-wrap:wrap;gap:6px;">
+       <span style="font-size:14px;font-weight:${i===HL?600:400};">${s}</span>
+       <span style="display:flex;align-items:center;gap:10px;">
+         <span style="font-size:13px;color:var(--muted);">${eur(ref.vals[i])} → ${eur(CUR.vals[i])}</span>
+         <span class="dchip ${d<0?'dn':'up'}">${d>0?'+':''}${d.toFixed(0)}% ${d<0?'↓':'↑'}</span>
+       </span>
+     </div>
+     <div style="height:16px;position:relative;">
+       <div style="position:absolute;top:0;left:0;height:6px;width:${(ref.vals[i]/maxV*100).toFixed(1)}%;background:var(--g3);border-radius:3px;"></div>
+       <div style="position:absolute;top:9px;left:0;height:6px;width:${(CUR.vals[i]/maxV*100).toFixed(1)}%;background:${i===HL?'var(--b1)':'var(--b3)'};border-radius:3px;"></div>
+     </div>
+     ${i===HL?'<p style="font-size:12.5px;color:var(--b1);margin-top:7px;font-weight:500;">The part that matters — declining despite total growth</p>':''}`;
+    bindTip(row,()=>tipHTML(i,REFS[mode]));
+    host.appendChild(row);
+  });
+}
+
+let open3=false;
+function render3(){
+  const ref=REFS[mode]; 
+  const dT=(CUR.total-ref.total)/ref.total*100;
+  document.getElementById('h3').innerHTML=`Revenue is up <span class="pos">+${dT.toFixed(0)}%</span> \u2014 organic is the only major source in decline`;
+  document.getElementById('s3').textContent=`${CUR.label} vs ${ref.label} \u00b7 totals, with each segment's difference`;
+  document.getElementById('n3').textContent=open3?'Click a total bar to collapse.':'Click a total bar to see each segment\u2019s difference vs the reference.';
+  const host=document.getElementById('v3'); host.innerHTML='';
+  const W=840,x0=150,bw=W-x0-90,bh=26,gap=12,minE=-0.45,maxE=2.75;
+  const X=v=>x0+(v-minE)/(maxE-minE)*bw;
+  let rows=[{t:'total',label:CUR.label,v:CUR.total,cur:true}];
+  if(open3) SEGS.forEach((s,i)=>rows.push({t:'delta',label:s,d:CUR.vals[i]-ref.vals[i],i}));
+  rows.push({t:'total',label:ref.label,v:ref.total});
+  const H=rows.length*(bh+gap)+34;
+  const svg=ns('svg',{viewBox:`0 0 ${W} ${H}`});
+  [0.5,1.0,1.5,2.0,2.5].forEach(g=>{
+    svg.appendChild(ns('line',{x1:X(g),y1:8,x2:X(g),y2:H-24,stroke:'#f1f1f3','stroke-width':1}));
+    svg.appendChild(stext(X(g),H-8,'\u20ac'+g.toFixed(1)+'M',11,'#c8c8cd','middle'));
+  });
+  svg.appendChild(ns('line',{x1:X(0),y1:8,x2:X(0),y2:H-24,stroke:'#a1a1aa','stroke-width':1}));
+  svg.appendChild(stext(X(0),H-8,'0',11,'#a1a1aa','middle'));
+  rows.forEach((r,ri)=>{
+    const y=12+ri*(bh+gap);
+    svg.appendChild(stext(x0-10,y+bh/2+4,r.label,12.5,r.t==='total'?(r.cur?'#3f3f46':'#a1a1aa'):'#71717a','end',r.t==='total'?600:400));
+    if(r.t==='total'){
+      const rect=ns('rect',{x:X(0),y,width:X(r.v)-X(0),height:bh,rx:4,fill:r.cur?'#1e5fae':'#d4d4d8'});
+      rect.style.cursor='pointer';
+      rect.addEventListener('click',()=>{open3=!open3;render3();});
+      bindTip(rect,()=>`<div class="t-name">${r.label}</div><div>Total revenue ${eur(r.v)}</div><div class="t-mut">${open3?'Click to collapse':'Click to expand segment differences'}</div>`);
+      svg.appendChild(rect);
+      svg.appendChild(stext(X(r.v)+8,y+bh/2+4,eur(r.v),12.5,r.cur?'#1e5fae':'#a1a1aa','start',600));
+      if(!open3&&r.cur) svg.appendChild(stext(X(0)+10,y+bh/2+4,'+ what changed?',11.5,'#d7e5f4','start',500));
+    } else {
+      const a=X(Math.min(0,r.d)), w=Math.max(Math.abs(X(r.d)-X(0)),3);
+      const rect=ns('rect',{x:a,y,width:w,height:bh,rx:4,fill:r.i===HL?'#1e5fae':'#a9c8e8'});
+      rect.style.cursor='pointer';
+      bindTip(rect,()=>`<div class="t-name">${r.label}</div><div>${eur(REFS[mode].vals[r.i])} \u2192 ${eur(CUR.vals[r.i])}</div><div class="t-mut">Difference ${r.d>=0?'+':'\u2212'}\u20ac${Math.abs(r.d*1000).toFixed(0)}k vs ${REFS[mode].label}</div>`);
+      svg.appendChild(rect);
+      svg.appendChild(stext(r.d>=0?X(r.d)+8:a-8,y+bh/2+4,(r.d>=0?'+':'\u2212')+'\u20ac'+Math.abs(r.d*1000).toFixed(0)+'k',12,r.i===HL?'#1e5fae':'#71717a',r.d>=0?'start':'end',r.i===HL?600:400));
+    }
+  });
+  host.appendChild(svg);
+}
+
+function render4(){
+  const ref=REFS[mode]; headline('h4','s4',ref);
+  const host=document.getElementById('v4'); host.innerHTML='';
+  const W=840,H=250,xL=250,xR=W-250,top=26,bot=H-26;
+  const mx=Math.max(...ref.shares,...CUR.shares)+4;
+  const Y=v=>bot-(v/mx)*(bot-top);
+  const svg=ns('svg',{viewBox:`0 0 ${W} ${H}`});
+  svg.appendChild(ns('line',{x1:xL,y1:top-8,x2:xL,y2:bot+6,stroke:'#e4e4e7'}));
+  svg.appendChild(ns('line',{x1:xR,y1:top-8,x2:xR,y2:bot+6,stroke:'#e4e4e7'}));
+  svg.appendChild(stext(xL,14,ref.label,12,'#a1a1aa','middle',500));
+  svg.appendChild(stext(xR,14,CUR.label,12,'#3f3f46','middle',600));
+  const order=[...SEGS.keys()].sort((a,b)=>CUR.shares[b]-CUR.shares[a]);
+  const usedL=[],usedR=[];
+  function clear(y,used){let yy=y;used.sort((a,b)=>a-b).forEach(u=>{if(Math.abs(yy-u)<15)yy=u+15;});used.push(yy);return yy;}
+  order.forEach(i=>{
+    const yl=Y(ref.shares[i]), yr=Y(CUR.shares[i]);
+    const hl=i===HL;
+    const ln=ns('line',{x1:xL,y1:yl,x2:xR,y2:yr,stroke:hl?'#1e5fae':'#a9c8e8','stroke-width':hl?3.5:2,'stroke-linecap':'round'});
+    ln.style.cursor='pointer'; bindTip(ln,()=>tipHTML(i,REFS[mode]));
+    svg.appendChild(ln);
+    svg.appendChild(ns('circle',{cx:xL,cy:yl,r:hl?5:4,fill:'#a1a1aa'}));
+    svg.appendChild(ns('circle',{cx:xR,cy:yr,r:hl?5:4,fill:hl?'#1e5fae':'#5b93d1'}));
+    const tyl=clear(yl+4,usedL), tyr=clear(yr+4,usedR);
+    svg.appendChild(stext(xL-12,tyl,`${SEGS[i]}  ${ref.shares[i]}%`,12.5,'#a1a1aa','end',hl?500:400));
+    svg.appendChild(stext(xR+12,tyr,`${CUR.shares[i]}%  ${SEGS[i]}`,12.5,hl?'#1e5fae':'#3f3f46','start',hl?600:400));
+  });
+  host.appendChild(svg);
+}
+
+function render5(){
+  const ref=REFS[mode]; headline('h5','s5',ref);
+  const host=document.getElementById('v5'); host.innerHTML='';
+  function barRow(label,shares,total,kind){
+    const row=document.createElement('div'); row.className='row5';
+    const h=kind==='mid'?14:26;
+    const segs=shares.map((v,i)=>{
+      let bg,txcol;
+      if(kind==='cur'){bg=CURC[i];txcol=CURT[i];}
+      else if(kind==='ref'){bg=REFC[i];txcol=REFT[i];}
+      else {bg=i===HL?'#8fb5dd':'#e4e4e7';txcol=i===HL?'#fff':'#a1a1aa';}
+      return `<div class="seg" data-i="${i}" style="width:${v}%;background:${bg};color:${txcol};height:${h}px;">${(kind!=='mid'&&v>=10)?v+'%':''}</div>`;
+    }).join('');
+    row.innerHTML=`<span class="lab" style="${kind==='cur'?'color:#3f3f46;font-weight:600;':''}">${label}</span><div class="bar">${segs}</div><span class="tot" style="${kind==='cur'?'color:#3f3f46;font-weight:600;':''}">${total?eur(total):''}</span>`;
+    row.querySelectorAll('.seg').forEach(el=>{
+      const i=+el.dataset.i; el.style.cursor='pointer'; bindTip(el,()=>tipHTML(i,REFS[mode]));
+    });
+    return row;
+  }
+  host.appendChild(barRow(CUR.label,CUR.shares,CUR.total,'cur'));
+  if(open5) ref.mids.forEach(m=>host.appendChild(barRow(m[0],m[1],m[2],'mid')));
+  host.appendChild(barRow(ref.label,ref.shares,ref.total,'ref'));
+  const d5=document.getElementById('d5'); d5.innerHTML='';
+  SEGS.forEach((s,i)=>{
+    const d=(CUR.vals[i]-ref.vals[i])/ref.vals[i]*100;
+    const c=document.createElement('span');
+    c.className='dchip '+(d<0?'dn':'up')+(i===HL?' hl':'');
+    c.textContent=`${s} ${d>0?'+':''}${d.toFixed(0)}%`;
+    d5.appendChild(c);
+  });
+  document.getElementById('ex5').textContent=open5?'Hide period-by-period path':'Show period-by-period path';
+}
+
+document.getElementById('ex5').addEventListener('click',()=>{open5=!open5;render5();});
+
+function renderAll(){
+  document.querySelectorAll('[data-sw] button').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
+  render1();render2();render3();render4();render5();
+}
+document.querySelectorAll('[data-sw] button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.m;renderAll();}));
+renderAll();
+</script>
+</body>
+</html>

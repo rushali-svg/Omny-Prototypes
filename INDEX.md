@@ -24,6 +24,14 @@ Interactive HTML prototypes for Omny UX iterations. Each prototype lives in its 
 | Portfolio management flow | v3 | 🔄 Iterating — creation flow + card overview approved Jul 29; tab restructure & lighter filter pending | [Meeting](https://fathom.video/calls/763172977) | [View](https://rushali-svg.github.io/Omny-Prototypes/ppc-module/portfolio-prototype-v3.html) |
 | Portfolio — visual options exploration | — | 🧪 Exploration — card view chosen over calendar/list (Jul 29) | [Meeting](https://fathom.video/calls/763172977) | [View](https://rushali-svg.github.io/Omny-Prototypes/ppc-module/portfolio-prototype-visual-options.html) |
 
+## Strategic Module
+
+| Prototype | Version | Status | Validated / Discussed | Live Link |
+|---|---|---|---|---|
+| Revenue comparison viz — iterations | v1 | 🔄 Iterating | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/revenue-comparison-viz-iterations.html) |
+| Strategic module — full prototype (Sep 23) | v1 | 🔄 Iterating | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-23-09.html) |
+
+
 ## Module Access Feature (Platform Modularization)
 
 | Prototype | Version | Status | Validated / Discussed | Live Link |
