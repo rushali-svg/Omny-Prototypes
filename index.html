@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Omny — Prototype Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#fafafa; --card:#fff; --border:#e4e4e7; --fg:#18181b;
+    --muted:#71717a; --subtle:#a1a1aa; --accent:#1e5fae; --accent-hover:#174a8a;
+    --green:#0f766e; --greenbg:#f0fdfa;
+    --amber:#a16207; --amberbg:#fefce8;
+    --purple:#7c3aed; --purplebg:#f5f3ff;
+    --slate:#64748b; --slatebg:#f8fafc;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Figtree',-apple-system,sans-serif; background:var(--bg); color:var(--fg); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .page { max-width:900px; margin:0 auto; padding:56px 32px 80px; }
+  .header { margin-bottom:40px; }
+  h1 { font-size:28px; font-weight:600; letter-spacing:-.02em; margin-bottom:8px; }
+  .subtitle { color:var(--muted); font-size:15px; max-width:620px; margin-bottom:6px; }
+  .maintainer { font-family:var(--mono); font-size:12px; color:var(--subtle); }
+  .section { margin-bottom:36px; }
+  .section h2 { font-size:17px; font-weight:600; margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  thead th { text-align:left; font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); padding:8px 12px; border-bottom:2px solid var(--border); }
+  tbody td { padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:#f4f4f5; }
+  .proto-name { font-weight:500; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { color:var(--accent-hover); text-decoration:underline; }
+  .badge { display:inline-block; font-size:12px; font-weight:500; padding:2px 10px; border-radius:9999px; white-space:nowrap; }
+  .badge-finalized { background:var(--greenbg); color:var(--green); }
+  .badge-iterating { background:var(--amberbg); color:var(--amber); }
+  .badge-exploration { background:var(--purplebg); color:var(--purple); }
+  .badge-superseded { background:var(--slatebg); color:var(--slate); }
+  .version { font-family:var(--mono); font-size:12px; color:var(--subtle); }
+  .legend { margin-top:40px; padding-top:24px; border-top:1px solid var(--border); }
+  .legend h2 { font-size:15px; font-weight:600; margin-bottom:12px; border:none; padding:0; }
+  .legend ul { list-style:none; font-size:14px; color:var(--muted); }
+  .legend li { margin-bottom:6px; }
+  .legend li strong { color:var(--fg); }
+  .footer { margin-top:32px; font-family:var(--mono); font-size:12px; color:var(--subtle); }
+  @media(max-width:640px){
+    .page { padding:32px 16px 48px; }
+    table { font-size:13px; }
+    thead th, tbody td { padding:8px 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>Omny — Prototype Index</h1>
+    <p class="subtitle">Interactive HTML prototypes for Omny UX iterations. Each prototype lives in its feature/module folder.</p>
+    <p class="maintainer">Maintained by Rushali Bhatt (Tcules)</p>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="section">
+    <h2>Dashboard</h2>
+    <table>
+      <thead><tr><th>Prototype</th><th>Ver</th><th>Status</th><th>Meeting</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="proto-name">Filter dropdown UX (Apply / Discard, top-aligned Clear)</td>
+          <td class="version">v1</td>
+          <td><span class="badge badge-finalized">Finalized</span></td>
+          <td><a href="https://fathom.video/calls/729690373">Jun 30</a></td>
+          <td><a href="dashboard/filter-UX-v1.html">View</a></td>
+        </tr>
+        <tr>
+          <td class="proto-name">Evolution Mode (&plusmn;% changes, pp for TACOS/ROAS)</td>
+          <td class="version">final*</td>
+          <td><span class="badge badge-iterating">Iterating</span></td>
+          <td><a href="https://fathom.video/calls/763172977">Jul 29</a></td>
+          <td><a href="dashboard/evolution-mode-prototype-v1.html">View</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PPC Module -->
+  <div class="section">
+    <h2>PPC Module — Strategy Layer / Portfolio Management</h2>
+    <table>
+      <thead><tr><th>Prototype</th><th>Ver</th><th>Status</th><th>Meeting</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="proto-name">Strategy layer — first concept</td>
+          <td class="version">v1</td>
+          <td><span class="badge badge-superseded">Superseded</span></td>
+          <td><a href="https://fathom.video/calls/735613908">Jul 7</a></td>
+          <td><a href="ppc-module/strategy-prototype-v1.html">View</a></td>
+        </tr>
+        <tr>
+          <td class="proto-name">Strategy layer — iteration</td>
+          <td class="version">v2</td>
+          <td><span class="badge badge-superseded">Superseded</span></td>
+          <td><a href="https://fathom.video/calls/758964862">Jul 27</a></td>
+          <td><a href="ppc-module/strategy-prototype-v2.html">View</a></td>
+        </tr>
+        <tr>
+          <td class="proto-name">Portfolio management flow</td>
+          <td class="version">v3</td>
+          <td><span class="badge badge-iterating">Iterating</span></td>
+          <td><a href="https://fathom.video/calls/763172977">Jul 29</a></td>
+          <td><a href="ppc-module/portfolio-prototype-v3.html">View</a></td>
+        </tr>
+        <tr>
+          <td class="proto-name">Portfolio — visual options exploration</td>
+          <td class="version">—</td>
+          <td><span class="badge badge-exploration">Exploration</span></td>
+          <td><a href="https://fathom.video/calls/763172977">Jul 29</a></td>
+          <td><a href="ppc-module/portfolio-prototype-visual-options.html">View</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Strategic Module -->
+  <div class="section">
+    <h2>Strategic Module</h2>
+    <table>
+      <thead><tr><th>Prototype</th><th>Ver</th><th>Status</th><th>Meeting</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="proto-name">Revenue comparison viz — iterations</td>
+          <td class="version">v1</td>
+          <td><span class="badge badge-iterating">Iterating</span></td>
+          <td>—</td>
+          <td><a href="strategic%20module/revenue-comparison-viz-iterations.html">View</a></td>
+        </tr>
+        <tr>
+          <td class="proto-name">Strategic module — full prototype (Sep 23)</td>
+          <td class="version">v1</td>
+          <td><span class="badge badge-iterating">Iterating</span></td>
+          <td>—</td>
+          <td><a href="strategic%20module/strategic-module-23-09.html">View</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Module Access Feature -->
+  <div class="section">
+    <h2>Module Access Feature (Platform Modularization)</h2>
+    <table>
+      <thead><tr><th>Prototype</th><th>Ver</th><th>Status</th><th>Meeting</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="proto-name">Module access — toggle list, two-level control (Activate / Visible to Customer), radio buttons</td>
+          <td class="version">v1</td>
+          <td><span class="badge badge-finalized">Finalized</span></td>
+          <td><a href="https://fathom.video/calls/754075173">Jul 22</a></td>
+          <td><a href="module-access-feature/module-access-v1.html">View</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <h2>Status legend</h2>
+    <ul>
+      <li><span class="badge badge-finalized">Finalized</span> — validated in sync, ready for / in dev handoff</li>
+      <li><span class="badge badge-iterating">Iterating</span> — direction approved, revisions in progress</li>
+      <li><span class="badge badge-exploration">Exploration</span> — comparison / option study, not a candidate build</li>
+      <li><span class="badge badge-superseded">Superseded</span> — kept for iteration trail; see newer version</li>
+    </ul>
+  </div>
+
+  <p class="footer">Last updated: 2026-09-28</p>
+
+</div>
+</body>
+</html>
