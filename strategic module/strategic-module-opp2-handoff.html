@@ -1,0 +1,2487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Omny — Strategic Module</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* surface */
+  --bg:#fafafa; --card:#fff; --line:#e6e6e6; --line-2:#f0f0f0; --track:#f2f2f2;
+  --line-card:#eeebe7;   /* card edges sit back; controls keep --line */
+  --rail-bg:#1a1817; --rail-soft:rgba(255,246,240,.08); --rail-active:rgba(255,255,255,.2);
+  --red-badge:#e3333c;
+
+  /* ink — three, and only three */
+  --ink:#1f1f1f; --ink-2:#6b6b6b; --ink-3:#9e9e9e; --ink-4:#b5b5b5;
+  --ctrl-h:34px; --ctrl-r:8px; --ctrl-b:#e3e3e3;
+
+  /* semantics — deltas and status only */
+  --up:#12924a; --dn:#d4443a; --orange:#f2571d;
+  --dot-r:#e5413a; --dot-a:#f0a622; --dot-g:#2fab68;
+
+  /* data — validated: lightness band, chroma floor, CVD sep, contrast */
+  --c1:#0d8b7a; --c1-l:#b2e5da;   /* loyal / acquisition */
+  --c2:#c97f0a; --c2-l:#f7ddb0;   /* at risk */
+  --c3:#5f9ed4; --c3-l:#cfe0f2;   /* single */
+  --c4:#d9544a; --c4-l:#fbd2cc;   /* churn */
+
+  /* type — four sizes, two weights */
+  --f1:12px; --f2:14px; --f3:18px; --f4:clamp(22px,1.9vw,26px);
+
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:28px; --s7:40px;
+
+  /* desktop grid — one gutter and one measure for header and content alike */
+  --maxw:1520px; --pad:28px; --kpi-h:198px; --gap:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+button{font-family:inherit;cursor:pointer;background:none;border:none;color:inherit}
+html,body{height:100%}
+body{font-family:'Figtree',system-ui,sans-serif;font-size:var(--f2);line-height:1.5;color:var(--ink-2);
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums lining-nums;
+  display:flex;overflow:hidden;background:var(--bg)}
+
+/* rail */
+.rail{width:64px;flex:none;height:100vh;background:var(--rail-bg);display:flex;flex-direction:column;overflow:hidden}
+.rail .acct{height:60px;flex:none;background:var(--rail-soft);border-bottom:1px solid rgba(0,0,0,.1);display:flex}
+.rail .acct-in{flex:1;background:rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;padding:8px}
+.rail .avatar{width:32px;height:32px;border-radius:50%;background:#ccb771;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px}
+.rail .navlist{flex:1;display:flex;flex-direction:column;padding:8px 0;min-height:0}
+.rail .nav-top{flex:1;display:flex;flex-direction:column;gap:4px;align-items:center;padding:0 14px}
+.rail .nitem{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#b8b4b0;cursor:default}
+.rail .nitem.on{background:var(--rail-active);color:#fff}
+.rail .nav-bottom{display:flex;flex-direction:column;gap:4px;align-items:center;padding-bottom:6px}
+.rail .bbtn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#b8b4b0;position:relative;cursor:default}
+.rail .badge99{position:absolute;top:-4px;left:12px;background:var(--red-badge);color:#fff;font-size:var(--f1);font-weight:600;border-radius:16px;padding:0 4px;line-height:1.4}
+.rail .logo-w{background:var(--rail-soft);padding:14px 12px;display:flex;justify-content:center}
+.rail .logo-av{width:24px;height:24px;border-radius:50%;background:#e5f6ff;border:1px solid #57c5ff;color:#00548a;display:flex;align-items:center;justify-content:center}
+.collapse-pill{position:fixed;left:50px;bottom:40px;background:#fff;border-radius:24px;padding:6px;box-shadow:0 1px 3px rgba(0,0,0,.18);z-index:50;color:var(--ink-2);display:flex;cursor:default}
+
+/* ═══ one header bar — title and controls, no separator ═══ */
+.rightcol{flex:1;height:100vh;display:flex;flex-direction:column;min-width:0}
+.topbar{height:60px;flex:none;background:#fff;display:flex;align-items:center;gap:var(--s4);
+  padding:0 max(var(--pad),calc((100% - var(--maxw))/2 + var(--pad)))}
+/* module tabs \u2014 their own row under the header, salmon on the active one */
+.tabbar{height:50px;flex:none;background:#fff;display:flex;align-items:center;gap:var(--s1);
+  padding:0 max(var(--pad),calc((100% - var(--maxw))/2 + var(--pad)));
+  border-bottom:1px solid var(--line)}
+.mtab{font-size:var(--f2);color:var(--ink-2);padding:8px 16px;border-radius:8px;white-space:nowrap;
+  transition:background .13s,color .13s}
+.mtab:hover{color:var(--ink);background:var(--track)}
+.mtab.sel{background:#ffeee2;color:#e0600f;font-weight:600}
+.mtab.sel:hover{background:#ffeee2}
+.ptitle{font-size:var(--f3);font-weight:600;color:var(--ink);white-space:nowrap;flex:none}
+.chips-h{display:flex;align-items:center;gap:var(--s2);margin-left:var(--s4);min-width:0;flex:0 1 auto}
+.chips-h .dd.brand{min-width:0}
+.chips-h .dd.brand .dd-btn{min-width:0}
+.chips-h .dd.brand .txt{max-width:190px}
+.chips-h .dd.mkt{flex:none}
+.flag-fr{width:16px;height:11px;border-radius:2px;overflow:hidden;display:flex;flex:none}
+.flag-fr i{flex:1}.flag-fr i:nth-child(1){background:#0055A4}.flag-fr i:nth-child(2){background:#fff}.flag-fr i:nth-child(3){background:#EF4135}
+
+.ctrls{margin-left:auto;display:flex;align-items:center;gap:var(--s3);flex:none}
+.ctrls>*{flex:none}
+.ctrls .iq{margin-left:2px}
+.ctrls[hidden]{display:none}
+/* evolution — text + switch, orange when on, no border, no fill */
+.evo{display:inline-flex;align-items:center;gap:10px;font-size:var(--f2);font-weight:600;color:var(--ink);
+  padding:0;flex:none;white-space:nowrap}
+.evo .sw{width:44px;height:24px;border-radius:99px;background:#e0e0e0;position:relative;
+  transition:background .16s;flex:none}
+.evo .sw::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.22);transition:transform .16s}
+.evo[aria-pressed="true"] .sw{background:var(--orange)}
+.evo[aria-pressed="true"] .sw::after{transform:translateX(20px)}
+
+.dd{position:relative}
+.dd-btn{display:flex;align-items:center;gap:8px;border:1px solid var(--ctrl-b);border-radius:var(--ctrl-r);
+  background:#fff;height:var(--ctrl-h);padding:0 10px 0 13px;font-size:var(--f2);color:var(--ink);
+  justify-content:space-between;white-space:nowrap}
+.dd-btn:hover{border-color:#d2d2d2}
+.dd-btn>svg{stroke:var(--ink-2);fill:none;stroke-width:1.9;flex:none}
+.dd-btn .ico{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
+  color:var(--ink-2);flex:none;margin:0}
+.dd-btn .ico svg{display:block}
+.dd-btn .txt{overflow:hidden;text-overflow:ellipsis}
+.dd.unit .dd-btn{min-width:108px}
+.dd-menu{position:absolute;top:calc(100% + 4px);right:0;z-index:60;min-width:100%;white-space:nowrap;background:#fff;
+  border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.09);padding:4px;display:none}
+.dd.open .dd-menu{display:block}
+.dd-opt{display:block;width:100%;text-align:left;font-size:var(--f2);color:var(--ink-2);padding:7px 12px;border-radius:6px}
+.dd-opt:hover{background:var(--track)}
+.dd-opt.sel{color:var(--ink);font-weight:600;background:var(--track)}
+
+.seg{display:inline-flex;background:#fff;border:1px solid var(--ctrl-b);border-radius:var(--ctrl-r);
+  height:var(--ctrl-h);overflow:hidden}
+.seg button{font-size:var(--f2);color:var(--ink-3);padding:0 15px;background:#fff;white-space:nowrap;height:100%}
+.seg button+button{border-left:1px solid var(--ctrl-b)}
+.seg button:hover{color:var(--ink-2)}
+.seg button.sel{background:#f2f2f2;color:var(--ink);font-weight:500}
+
+.perwrap{position:relative}
+.perbtn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ctrl-b);background:#fff;
+  border-radius:var(--ctrl-r);height:var(--ctrl-h);padding:0 13px;white-space:nowrap}
+.perbtn:hover{border-color:#d4d4d4}
+/* on Growth opportunity the window is fixed by the data, so the control becomes a label:
+   same pill, no chevron, no comparison, nothing to click */
+.perwrap.static .perbtn{cursor:default}
+.perwrap.static .perbtn:hover{border-color:var(--ctrl-b)}
+.perwrap.static .chev,.perwrap.static .px{display:none}
+.perbtn .cal{color:var(--ink-3);flex:none}
+.perbtn .pl{font-size:var(--f2);font-weight:600;color:var(--ink)}
+.perbtn .px{font-size:var(--f2);color:var(--ink-3)}
+.perbtn svg{width:12px;height:12px;stroke:var(--ink-3);fill:none;stroke-width:1.8;flex:none}
+.perpanel{position:absolute;top:calc(100% + 6px);right:0;z-index:80;background:#fff;border:1px solid var(--line);
+  border-radius:10px;padding:var(--s4);width:360px;box-shadow:0 12px 34px rgba(0,0,0,.11);display:none}
+.perwrap.open .perpanel{display:block}
+.perpanel h4{font-size:var(--f1);font-weight:600;color:var(--ink-3);margin-bottom:var(--s2);letter-spacing:.05em;text-transform:uppercase}
+.pergrp+.pergrp{margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--line-2)}
+.pergrid{display:grid;grid-template-columns:54px 1fr 1fr;gap:5px;align-items:center}
+.pergrid .ch{font-size:var(--f1);color:var(--ink-3);text-align:center}
+.pergrid .rl{font-size:var(--f2);color:var(--ink-2)}
+.pergrid button,.cmpo button{border:1px solid var(--line);border-radius:8px;padding:6px 9px;text-align:left;line-height:1.35}
+.pergrid button b,.cmpo button b{display:block;font-size:var(--f1);font-weight:600;color:var(--ink)}
+.pergrid button em,.cmpo button em{display:block;font-style:normal;font-size:var(--f1);color:var(--ink-3)}
+.pergrid button:hover,.cmpo button:hover{background:var(--track)}
+.pergrid button.sel,.cmpo button.sel{background:var(--track);border-color:#d8d8d8}
+.cmpo{display:flex;flex-direction:column;gap:5px}
+.cmpo button{display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.cmpo button b,.cmpo button em{display:inline}
+.cmpo button em{white-space:nowrap}
+
+/* ══════ opportunity tab ══════ */
+.okpi{margin-bottom:var(--s6)}
+/* data table — Omny pattern: value, bar and evolution inside one cell */
+.otw{overflow-x:auto;margin:0 calc(var(--s6)*-1);padding:0 var(--s6)}
+.otab{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:680px}
+.otab th{background:#fafafa;color:var(--ink-3);font-weight:500;font-size:var(--f1);text-align:right;
+  padding:9px 12px;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line);white-space:nowrap}
+.otab th:first-child{border-radius:8px 0 0 0}
+.otab th:last-child{border-radius:0 8px 0 0}
+.otab th.l{text-align:left}
+.otab td{padding:8px 12px;border-bottom:1px solid var(--line-2);text-align:right;vertical-align:middle}
+.otab tbody tr:last-child td{border-bottom:none}
+/* every column is separated, so a figure is read against its own header */
+.otab th+th,.otab td+td{border-left:1px solid var(--line-2)}
+.otab .g{border-left:1px solid var(--line-2)}
+.otab tbody tr:hover td{background:#fbfbfb}
+.otab tr.opp td{background:#fff8f2}
+.otab tr.opp:hover td{background:#fff3e8}
+.otab td.l{text-align:left}
+.kwn{font-weight:600;color:var(--ink);white-space:nowrap}
+.kwr{color:var(--ink-4);display:inline-block;width:22px;font-variant-numeric:tabular-nums}
+.mc{display:flex;align-items:center;gap:9px;justify-content:flex-end}
+.mc .n{font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+.mc .bar{flex:1;min-width:34px;height:4px;border-radius:99px;background:var(--track);overflow:hidden}
+.mc .bar i{display:block;height:100%;border-radius:99px;background:#f9c199}
+.mc .d{width:44px;text-align:right;font-size:var(--f1);font-variant-numeric:tabular-nums;color:var(--ink-3)}
+.mc .d.up{color:var(--up)} .mc .d.dn{color:var(--dn)}
+.mc .bar.off{display:none}
+.otab .rk{color:var(--ink-4);margin-right:6px;font-variant-numeric:tabular-nums}
+.spl{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.spl .sl{font-size:var(--f1);color:var(--ink-3)}
+.otab td .n{font-variant-numeric:tabular-nums;color:var(--ink)}
+.split{display:flex;height:6px;border-radius:99px;overflow:hidden;background:var(--track);min-width:74px}
+.split i{display:block;height:100%}
+.splitl{font-size:var(--f1);color:var(--ink-3);margin-top:3px;white-space:nowrap}
+.tnote{font-size:var(--f1);color:var(--ink-3);margin-top:var(--s4)}
+/* the odd row, called out */
+.odd{display:flex;gap:var(--s4);align-items:flex-start;margin-top:var(--s5);padding-top:var(--s4);
+  border-top:1px solid var(--line-2)}
+.odd .ob{font-weight:600;color:var(--ink);white-space:nowrap}
+.odd p{font-size:var(--f2);color:var(--ink-2);max-width:78ch}
+/* three anchor figures */
+.ofigs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s5)}
+.ofig .k{font-size:var(--f1);color:var(--ink-2)}
+.ofig .v{font-size:var(--f4);font-weight:600;color:var(--ink);letter-spacing:-.022em;margin:6px 0 3px;line-height:1}
+.ofig .s{font-size:var(--f1);color:var(--ink-3)}
+.kwbig{color:var(--orange)}
+/* market + serp, side by side */
+.two{display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);gap:var(--s7)}
+.colh{font-size:var(--f1);color:var(--ink-3);margin-bottom:var(--s3)}
+.shr{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:var(--f2)}
+.shr .p{color:var(--ink-4);width:14px;font-variant-numeric:tabular-nums}
+.shr .b{color:var(--ink-2);width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shr .t{flex:1;height:6px;border-radius:99px;background:var(--track);overflow:hidden;min-width:30px}
+.shr .t i{display:block;height:100%;border-radius:99px;background:#cfcfcf}
+.shr .v{width:46px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.shr.you .b,.shr.you .v{color:var(--ink);font-weight:600}
+.shr.you .t i{background:var(--orange)}
+.shr.rival .t i{background:#9a9a9a}
+/* product cell — same anatomy as the Omny product tables */
+.pcell{display:flex;gap:11px;align-items:flex-start;min-width:0;flex:1}
+.ptr{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.pthumb{width:40px;height:40px;border:1px solid var(--line);border-radius:6px;background:#f8f8f8;
+  display:flex;align-items:center;justify-content:center}
+.pthumb svg{width:19px;height:19px;stroke:#c6c6c6;fill:none;stroke-width:1.5}
+.pflag{width:19px;height:13px;border-radius:2px;overflow:hidden;display:flex;flex:none;margin-top:3px;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.14)}
+.pflag i{flex:1}
+.pflag i:nth-child(1){background:#0055A4}.pflag i:nth-child(2){background:#fff}.pflag i:nth-child(3){background:#EF4135}
+.ptx{min-width:0;padding-top:1px}
+.pttl{flex:1;min-width:0;font-size:var(--f2);font-weight:600;color:var(--ink);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.psub{font-size:var(--f1);color:var(--ink-3);margin-top:3px;line-height:1.4}
+/* results list — compact rows, hairline between, one line of title */
+.sr{display:flex;align-items:center;gap:10px;padding:9px 8px;font-size:var(--f2);
+  border-bottom:1px solid var(--line-2)}
+.sr:last-child{border-bottom:none}
+.sr .pthumb{width:30px;height:30px}
+.sr .pthumb svg{width:15px;height:15px}
+.sr .pflag{display:none}
+.sr .pttl{-webkit-line-clamp:1;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-weight:500}
+.sr .psub{margin-top:1px}
+.sr .p{color:var(--ink-2);width:26px;font-variant-numeric:tabular-nums;flex:none;font-weight:500}
+.sr .tag{margin-left:auto;font-size:var(--f1);padding:2px 8px;border-radius:99px;
+  white-space:nowrap;border:1px solid var(--line);color:var(--ink-3);flex:none}
+.sr .tag.spn{background:#f4f4f4}
+.sr .tag.org{background:#e4f6ec;border-color:#c9ecd9;color:#0b6b37}
+.sr.you{background:#fff6ef}
+.srgap{display:flex;align-items:center;gap:10px;padding:8px;color:var(--ink-4);font-size:var(--f1);
+  border-bottom:1px solid var(--line-2)}
+.srgap i{flex:1;height:1px;background:var(--line);display:block}
+.ties{margin-top:var(--s5);padding-top:var(--s4);border-top:1px solid var(--line-2);
+  font-size:var(--f2);color:var(--ink-2)}
+.ties b{color:var(--ink)}
+/* product candidates */
+.cand{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap)}
+.cc{border:1px solid var(--line-card);border-radius:10px;padding:var(--s4) var(--s5)}
+.cc.best{border-color:#ffd9bd;background:#fffaf6}
+.cc .cn{font-size:var(--f2);font-weight:600;color:var(--ink)}
+.cc .pcell{margin-bottom:2px}
+.cc .cb{display:inline-block;font-size:var(--f1);padding:2px 8px;border-radius:99px;margin-bottom:8px;
+  background:var(--track);color:var(--ink-3)}
+.cc.best .cb{background:#ffeee2;color:#e0600f;font-weight:600}
+/* what you can move on the left, what the shoppers say on the right \u2014 each pair on one line */
+.cc .cf{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s4);
+  margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--line-2);
+  font-size:var(--f1);flex-wrap:wrap}
+.cc .cgrp{display:flex;gap:var(--s4);min-width:0}
+.cc .cgrp.r{margin-left:auto;text-align:right}
+.cc .cg{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cc .ck{color:var(--ink-4)}
+.cc .cv{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+/* comparison */
+.cmp{width:100%;border-collapse:collapse;font-size:var(--f2)}
+.cmp th{text-align:right;font-weight:600;color:var(--ink);font-size:var(--f2);padding:0 12px 10px;
+  border-bottom:1px solid var(--line)}
+.cmp th:first-child{text-align:left;font-weight:400;color:var(--ink-3);font-size:var(--f1)}
+.cmp th.you{color:var(--orange)}
+.cmp td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line-2);font-variant-numeric:tabular-nums}
+.cmp tr:last-child td{border-bottom:none}
+.cmp td:first-child{text-align:left;color:var(--ink-2);font-variant-numeric:normal}
+.cmp td.mine{color:var(--ink);font-weight:600}
+.cmp td.mine.worse{color:var(--dn)}
+/* close the loop */
+.obs{display:flex;flex-direction:column;gap:var(--s3)}
+.ob{display:flex;gap:12px;align-items:baseline;font-size:var(--f2);color:var(--ink-2)}
+.ob i{width:5px;height:5px;border-radius:50%;background:var(--ink-4);flex:none;position:relative;top:-3px}
+.ob b{color:var(--ink);font-weight:600}
+.axh{font-size:var(--f1);color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em;
+  margin:var(--s6) 0 var(--s3)}
+.axl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap)}
+.axc{text-align:left;border:1px solid var(--line-card);border-radius:10px;padding:var(--s4) var(--s5);
+  background:#fff;display:flex;flex-direction:column;gap:7px;transition:border-color .13s,box-shadow .13s}
+.axc:hover{border-color:#d8d2cc;box-shadow:0 4px 14px rgba(0,0,0,.05)}
+.axc .ah{display:flex;align-items:center;gap:8px;font-size:var(--f2);font-weight:600;color:var(--ink)}
+.axc .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.axc .av{font-size:var(--f3);font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.axc .as{font-size:var(--f1);color:var(--ink-3)}
+.axc .al{font-size:var(--f1);color:var(--ink-2);line-height:1.55}
+.axc .ago{margin-top:auto;padding-top:10px;font-size:var(--f1);color:var(--ink-3);display:flex;
+  align-items:center;gap:6px}
+.axc:hover .ago{color:var(--orange)}
+.axc .ago svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.9}
+@media(max-width:1180px){.two{grid-template-columns:1fr}.cand,.axl,.ofigs{grid-template-columns:1fr}}
+
+/* ═══ content ═══ */
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.band{width:100%}
+.inner{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad)}
+.b1{padding:var(--s5) 0 0}
+.b2{background:linear-gradient(180deg,var(--tint,transparent) 0%,var(--bg) 420px);
+  border-top:1px solid var(--tintline,var(--line));padding:var(--s6) 0 var(--s7)}
+
+.sect{display:flex;align-items:center;gap:var(--s2);margin:0 0 var(--s3)}
+.sect h2{font-size:var(--f1);font-weight:600;color:#7d7d7d;letter-spacing:.07em;text-transform:uppercase}
+.sect .rt{margin-left:auto;display:flex;align-items:center;gap:var(--s2)}
+.sect .hint{font-size:var(--f1);color:var(--ink-3)}
+.sect+.sect,.block+.sect,.mrow+.sect{margin-top:var(--s6)}
+/* a secondary section — same grammar, quieter, for material that is not keyword-level */
+.sect .gtag{font-size:var(--f1);color:var(--ink-3);text-transform:none;letter-spacing:0;font-weight:400;
+  padding:2px 8px;border-radius:99px;background:var(--track);white-space:nowrap}
+/* keyword material on the left, the account-level picture beside it — lighter, and clearly not part of it */
+.mrow{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,.3fr);gap:var(--gap);align-items:stretch}
+@media (max-width:1180px){.mrow{grid-template-columns:1fr}}
+/* both columns are cards of the same make — only the content inside the narrow one is quieter */
+.mrow>.mcol{min-width:0;display:flex;flex-direction:column}
+.mrow>.mcol>.block{flex:1;margin-bottom:0}
+.mside .block{display:flex;flex-direction:column}
+.mside .mklist{flex:1;display:flex;flex-direction:column;justify-content:space-around}
+.mside .shr{padding:5px 0;font-size:var(--f1);gap:9px}
+.mside .shr .p{display:none}
+.mside .shr .b{width:auto;flex:1;min-width:0;color:var(--ink-3)}
+.mside .shr .t{flex:none;width:34px;height:5px}
+.mside .shr .v{width:42px;color:var(--ink-3)}
+.mside .shr.you .b,.mside .shr.you .v{color:var(--ink-2)}
+/* brand mark — monogram placeholder, the shape a real logo would sit in */
+.blogo{width:22px;height:22px;border-radius:5px;flex:none;background:#f3f3f3;border:1px solid var(--line-2);
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--ink-4)}
+.shr.you .blogo{background:#fff2e8;border-color:#ffd9bd;color:#e0600f}
+/* the count of brands standing between you and the top of the free results */
+.ahead{margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--line-2);
+  font-size:var(--f1);color:var(--ink-3)}
+.ahead b{color:var(--ink);font-weight:600}
+
+.iq{width:16px;height:16px;border-radius:50%;border:1px solid var(--line);color:var(--ink-3);
+  font-size:9.5px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex:none;line-height:1}
+.iq:hover{border-color:var(--ink-3);color:var(--ink-2)}
+.ctrls>.iq{width:20px;height:20px;font-size:11px;border-color:var(--ink-3)}
+.ctrls>.iq:hover{border-color:var(--ink-2);color:var(--ink)}
+.pop{position:absolute;z-index:90;width:min(300px,80vw);background:#fff;border:1px solid var(--line);
+  border-radius:10px;padding:var(--s3);font-size:var(--f1);line-height:1.55;color:var(--ink-2);
+  box-shadow:0 12px 32px rgba(0,0,0,.12)}
+.pop b{display:block;color:var(--ink);font-weight:600;margin-bottom:2px}
+
+/* KPI cards — left value, right gradient with the trend drawn in it */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap);margin-bottom:var(--s6)}
+.kpi{position:relative;background:#fff;border:1px solid var(--line-card);border-radius:12px;
+  overflow:hidden;min-height:var(--kpi-h)}
+.kpi .bg{position:absolute;inset:0;pointer-events:none}
+.kpi .bg svg{display:block}
+.kpi .ro{opacity:0;transition:opacity .13s}
+.kpi:hover .ro{opacity:1}
+.kpi .fg{position:relative;height:var(--kpi-h);padding:var(--s4) clamp(20px,1.5vw,30px);
+  display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+.kpi .khead{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);min-height:20px}
+.kpi .klab{display:inline-flex;align-items:center;gap:6px;font-size:var(--f2);color:var(--ink-2);line-height:18px}
+.kpi .kdelta{display:inline-flex;align-items:center;gap:6px;font-size:var(--f1);font-weight:600;white-space:nowrap}
+.kpi .karr{width:17px;height:17px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px}
+.kpi .karr.up{background:#dcf4e8;color:#0d8b7a}
+.kpi .karr.dn{background:#fee9e5;color:#d9544a}
+.kpi .kcmp{font-size:var(--f1);color:var(--ink-3);font-weight:400}
+.kpi .kval{font-size:clamp(27px,2.2vw,38px);font-weight:600;color:var(--ink);letter-spacing:-.026em;line-height:1}
+.kpi .kfoot{font-size:var(--f1);color:var(--ink-3)}
+.kpi .khead{width:100%}
+.kpi.sec .kval{color:var(--ink-2);font-size:clamp(21px,1.5vw,27px)}
+.cogs{display:inline-flex;align-items:center;gap:5px;font-size:var(--f1);color:var(--ink-3);
+  border:1px solid var(--line);background:#fff;border-radius:99px;padding:3px 9px;
+  margin-top:auto;width:fit-content;position:relative}
+.cogs::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--c2)}
+.up{color:var(--up)} .dn{color:var(--dn)} .fl{color:var(--ink-3)}
+
+/* growth statement */
+.glink{background:#fff;border:1px solid var(--line-card);border-radius:10px;padding:var(--s6);margin-bottom:var(--s6)}
+.glink .gh{font-size:17px;font-weight:500;color:var(--ink);letter-spacing:-.006em;line-height:1.4;
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.glink .ghi{position:relative;display:inline-flex;align-items:center}
+.grows{list-style:none;display:flex;flex-direction:column;gap:7px;margin-top:var(--s4)}
+.grows li{display:flex;align-items:center;gap:8px;font-size:13px;flex-wrap:wrap}
+.grows .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.grows b{color:var(--ink);font-weight:600}
+.grows .gmode{color:var(--ink-2);font-weight:400}
+.grows .gmech{color:var(--ink-3)}
+.grows .gmech::before{content:'\2014';margin-right:9px;color:var(--ink-3)}
+
+/* axis tabs */
+.dot.r{background:var(--dot-r)} .dot.a{background:var(--dot-a)} .dot.g{background:var(--dot-g)}
+.tabstrip{position:relative;z-index:3;display:flex;align-items:flex-end;gap:5px;
+  padding:0 0 11px 14px;margin:0 0 -12px -14px;overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.tabstrip::-webkit-scrollbar{display:none}
+/* inactive: independent cards, clear of the rule */
+.tab{position:relative;display:inline-flex;flex-direction:column;align-items:flex-start;gap:3px;
+  flex:none;scroll-snap-align:start;text-align:left;
+  margin-bottom:8px;padding:10px 16px 11px;color:var(--ink-3);white-space:nowrap;
+  border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px var(--line-card);
+  transition:background .14s,color .14s,box-shadow .14s}
+.tab:hover{color:var(--ink-2);box-shadow:inset 0 0 0 1px #dcd7d1}
+.tab .tt{display:flex;align-items:center;gap:8px;font-size:15px;line-height:1.25}
+/* active: seated on the rule, tinted by the axis */
+.tab.sel{margin-bottom:0;padding:12px 18px 14px;color:var(--ink);font-weight:600;z-index:3;
+  border-radius:12px 12px 0 0;background:var(--tint,#fff);
+  box-shadow:inset 1px 0 0 var(--tintline,var(--line)),inset -1px 0 0 var(--tintline,var(--line)),
+    inset 0 1px 0 var(--tintline,var(--line))}
+.tab.sel::before{content:'';position:absolute;bottom:0;left:-10px;width:10px;height:10px;
+  border-bottom-right-radius:10px;box-shadow:4px 4px 0 4px var(--tint,#fff);
+  border-right:1px solid var(--tintline);border-bottom:1px solid var(--tintline);pointer-events:none}
+.tab.sel .sh{position:absolute;bottom:0;right:-10px;width:10px;height:10px;
+  border-bottom-left-radius:10px;box-shadow:-4px 4px 0 4px var(--tint,#fff);
+  border-left:1px solid var(--tintline);border-bottom:1px solid var(--tintline);pointer-events:none}
+.tab .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.tab .ad{font-size:13px;color:var(--ink-3);font-weight:400;padding-left:16px;line-height:1.25}
+.tab.sel .ad{color:var(--ink-3)}
+.tab.sel .dot{box-shadow:0 0 0 2.5px rgba(255,255,255,.85)}
+/* the section the tab opens — no card, just a fading wash */
+.b2 .sect:first-child{margin-top:0}
+.b2 .block{border-color:var(--line-card)}
+.pickhint{font-size:var(--f2);color:var(--ink-3);padding:var(--s5) 0 var(--s6);margin-top:var(--s3);
+  border-top:1px solid var(--line-card)}
+.pickhint[hidden]{display:none}
+.axisline{font-size:var(--f2);color:var(--ink-3)}
+.axisline b{color:var(--ink-2);font-weight:600}
+
+/* blocks */
+.block{background:#fff;border:1px solid var(--line-card);border-radius:10px;padding:var(--s6);margin-bottom:var(--s3)}
+
+.lead{font-size:16px;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:var(--s5)}
+.cardhead{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s4);
+  margin-bottom:var(--s5);flex-wrap:wrap}
+.cardhead .lead{margin-bottom:0}
+.hero{display:inline-flex;align-items:baseline;gap:7px;flex:none;white-space:nowrap}
+.hero .hv{font-size:var(--f3);font-weight:600;color:var(--ink);letter-spacing:-.015em}
+.hero .hl{font-size:var(--f1);color:var(--ink-2)}
+.hero .hd{font-size:var(--f1);color:var(--ink-3)}
+.hero .hd::before{content:'\00b7';margin-right:7px;color:var(--ink-3)}
+
+/* verdict */
+.vchip{display:inline-flex;align-items:center;gap:7px;width:fit-content;font-size:var(--f1);
+  font-weight:600;border:1px solid transparent;border-radius:99px;padding:5px 12px}
+.vchip.r{background:#fdecea;color:#b3251d;border-color:#f6d5d1}
+.vchip.a{background:#fdf3de;color:#8a5608;border-color:#f2e1bd}
+.vchip.g{background:#e4f6ec;color:#0b6b37;border-color:#c9ecd9}
+.vchips{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
+.vhead{display:flex;flex-direction:column;gap:var(--s4);align-items:flex-start}
+.vsent{font-size:var(--f4);font-weight:600;line-height:1.2;letter-spacing:-.022em;color:var(--ink);max-width:24ch}
+.vsub{font-size:var(--f2);color:var(--ink-2);margin-top:7px;max-width:44ch}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--s5)}
+.fig{position:relative;min-width:0}
+.fig .k{font-size:var(--f1);color:var(--ink-2);display:flex;align-items:center;gap:5px}
+.fig .v{font-size:var(--f3);font-weight:600;color:var(--ink);letter-spacing:-.015em;margin:5px 0 3px}
+.fig .d{font-size:var(--f1);font-weight:600;min-height:17px}
+@media(min-width:1180px){
+  .vhead{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:var(--s5) var(--s7);align-items:start}
+  .vhead .vchips{grid-column:1/-1}
+  .figs{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+/* charts */
+.plot svg{width:100%;height:auto;overflow:visible;display:block}
+.hit{cursor:pointer;transition:opacity .12s}
+/* no expansion offered: the chart still reads and still shows tooltips, but nothing invites a click */
+.noexp .hit{cursor:default}
+.noexp .hit:hover{opacity:1}
+.hit:hover{opacity:.85}
+.hit:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+
+.defs{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5);margin-top:var(--s4);align-items:center}
+.def{display:flex;align-items:center;gap:6px;font-size:var(--f1);color:var(--ink-2)}
+.def i{width:8px;height:8px;border-radius:2px;flex:none}
+.rseg{display:inline-flex;background:var(--track);border-radius:99px;padding:2px}
+.rseg button{font-size:var(--f1);color:var(--ink-3);padding:4px 11px;border-radius:99px;white-space:nowrap}
+.rseg button.sel{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.07)}
+.tog{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);
+  border-radius:99px;padding:6px 13px;font-size:var(--f1);color:var(--ink-2);background:#fff}
+.tog:hover{border-color:#d4d4d4;color:var(--ink)}
+.tog svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .16s}
+.tog[aria-expanded="true"] svg{transform:rotate(180deg)}
+
+
+/* diagnosis */
+.diag{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap);margin-top:var(--s5)}
+.dcard{border:1px solid var(--line-card);border-radius:10px;padding:14px var(--s4);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.dcard .dl{font-size:var(--f2);font-weight:600;color:var(--ink)}
+.dcard .dm{font-size:var(--f1);color:var(--ink-3);margin-top:2px}
+.dcard .dv{font-size:var(--f3);font-weight:600;color:var(--ink);text-align:right;flex:none}
+.dcard .dq{display:block;font-size:var(--f1);font-weight:400;color:var(--ink-3)}
+.dhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lchip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
+  border-radius:99px;padding:2px 8px;white-space:nowrap}
+.lchip.bad{background:#fee9e5;color:#b3251d}
+.lchip.ok{background:var(--track);color:var(--ink-2)}
+.lchip svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;flex:none}
+.dcard.net{background:#fdf6f5;border-color:#f2d9d5}
+.dcard.net .dv{color:var(--dn)}
+
+/* trail — summary and the way out */
+.trail{background:#fff;border:1px solid var(--line-card);border-radius:10px;padding:var(--s6);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s5);flex-wrap:wrap}
+.trail .tcopy{min-width:0}
+.trail .tmeta{font-size:var(--f1);color:var(--ink-3);margin-top:5px}
+.trail ol{list-style:none;counter-reset:t}
+.trail li{counter-increment:t;padding:8px 0 8px 26px;position:relative;font-size:var(--f2);color:var(--ink-2)}
+.trail li::before{content:counter(t);position:absolute;left:0;top:10px;width:17px;height:17px;border-radius:50%;
+  border:1px solid var(--line);font-size:10px;color:var(--ink-3);display:flex;align-items:center;justify-content:center}
+.trail .sum{font-size:var(--f2);font-weight:600;color:var(--ink)}
+.act{border:1px solid var(--line);border-radius:99px;padding:8px 16px;font-size:var(--f2);color:var(--ink);
+  font-weight:600;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;background:#fff}
+.act:hover{border-color:#d4d4d4}
+.act svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.skel{padding:var(--s6) 0;max-width:62ch}
+.skel p{font-size:var(--f2);color:var(--ink-3)}
+
+.prevw{display:inline-flex;align-items:center;gap:6px}
+.prev{display:inline-flex;background:#fff;border:1px solid var(--line-card);border-radius:99px;padding:2px}
+.prev button{font-size:var(--f1);color:var(--ink-3);padding:3px 10px;border-radius:99px}
+.prev button:hover{color:var(--ink-2)}
+.prev button.sel{background:var(--track);color:var(--ink);font-weight:600}
+
+#tip{position:fixed;display:none;max-width:280px;background:#fff;border:1px solid var(--line);border-radius:8px;
+  padding:8px 10px;font-size:var(--f1);min-width:170px;line-height:1.5;box-shadow:0 10px 26px rgba(0,0,0,.13);
+  pointer-events:none;z-index:95;color:var(--ink-2)}
+#tip .tn{font-weight:600;color:var(--ink);margin-bottom:1px}
+#tip .tm{color:var(--ink-3)}
+#tip .ttr{display:flex;align-items:center;gap:7px;margin-top:3px}
+#tip .ttr b{margin-left:auto;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+#tip .ttr .tp{width:52px;text-align:right;color:var(--ink-3);font-variant-numeric:tabular-nums}
+#tip .ttr .tdot{width:7px;height:7px;border-radius:50%;flex:none}
+#tip .ttr.sep{margin-top:6px;padding-top:6px;border-top:1px solid var(--line);color:var(--ink-3)}
+
+.float-sw{position:fixed;right:20px;bottom:20px;z-index:88;background:#fff;border:1px solid var(--line);
+  border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.14);padding:10px 12px;min-width:206px}
+.float-sw .fs-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.float-sw .fs-t{font-size:var(--f1);color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em}
+.float-sw .fs-min{width:20px;height:20px;border-radius:5px;color:var(--ink-3);display:flex;align-items:center;justify-content:center}
+.float-sw.min{min-width:0;padding:0;border-radius:99px}
+.float-sw.min .fs-hd,.float-sw.min .fs-opts{display:none}
+.fs-pill{display:none;padding:8px 14px;font-size:var(--f1);color:var(--ink-2)}
+.fs-pill b{color:var(--orange)}
+.float-sw.min .fs-pill{display:inline-flex}
+.float-sw .fs-opts{display:flex;flex-direction:column;gap:4px}
+.float-sw .fs-g{font-size:var(--f1);color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px}
+.float-sw .fs-opts:first-of-type{margin-top:0}
+.float-sw.min .fs-g{display:none}
+.float-sw .fs-b{display:flex;gap:7px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;
+  text-align:left;font-size:var(--f1);color:var(--ink-2)}
+.float-sw .fs-b.sel{background:var(--track);border-color:#d8d8d8;color:var(--ink);font-weight:600}
+
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
+/* ── desktop range: 1180 → ultrawide ── */
+@media(min-width:1700px){:root{--maxw:1680px;--pad:36px;--kpi-h:218px;--gap:16px}}
+@media(min-width:2000px){:root{--maxw:1840px;--pad:44px;--kpi-h:236px;--gap:20px}}
+@media(min-width:2400px){:root{--maxw:1960px;--pad:52px}}
+@media(max-width:1520px){.chips-h .dd.brand .txt{max-width:132px}}
+@media(max-width:1380px){.chips-h .dd.brand .txt{max-width:96px}}
+@media(max-width:1300px){.chips-h .dd.mkt .txt{display:none}}
+@media(max-width:1180px){.chips-h{display:none}}
+@media(max-width:1180px){.kpis{grid-template-columns:1fr}.diag{grid-template-columns:1fr}}
+
+@media(max-width:820px){.float-sw{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="tip" role="tooltip"></div>
+<div id="live" class="sr-only" aria-live="polite"></div>
+
+<!-- ═══ left rail (Figma 103:2400) — decorative, non-interactive ═══ -->
+<nav class="rail" aria-label="Application navigation (decorative)">
+  <div class="acct"><div class="acct-in"><div class="avatar">H</div></div></div>
+  <div class="navlist">
+    <div class="nav-top">
+      <span class="nitem on" title="Home"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span>
+      <span class="nitem" title="Products"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7v10l8 4 8-4V7l-8-4z"/><path d="M4 7l8 4 8-4"/><path d="M12 11v10"/></svg></span>
+      <span class="nitem" title="Inventory"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M8 14h4"/></svg></span>
+      <span class="nitem" title="Advertising"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5 5 19"/><circle cx="7.5" cy="7.5" r="2.6"/><circle cx="16.5" cy="16.5" r="2.6"/></svg></span>
+      <span class="nitem" title="P&L"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7" ry="2.6"/><path d="M5 6v6c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6"/><path d="M5 12v6c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-6"/></svg></span>
+      <span class="nitem" title="Insights"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/></svg></span>
+    </div>
+    <div class="nav-bottom">
+      <span class="bbtn" title="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 7-2.5 7h17S18 15 18 9z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg><span class="badge99">99+</span></span>
+      <span class="bbtn" title="Help"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.2-2.6 3.7"/><circle cx="12" cy="17.3" r=".4" fill="currentColor"/></svg></span>
+    </div>
+  </div>
+  <div class="logo-w"><span class="logo-av"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.4"/><path d="M5.5 19.5c1.2-3 3.6-4.5 6.5-4.5s5.3 1.5 6.5 4.5"/></svg></span></div>
+</nav>
+<span class="collapse-pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="m14 9 3 3-3 3"/></svg></span>
+
+
+
+<div class="rightcol">
+  <header class="topbar">
+    <span class="ptitle">Strategic Module</span>
+    <div class="chips-h">
+      <div class="dd brand" id="ddBrand">
+        <button class="dd-btn" aria-haspopup="listbox" aria-expanded="false">
+          <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/><path d="M3 4h2.5l2.2 11.2a1.6 1.6 0 0 0 1.6 1.3h7.6a1.6 1.6 0 0 0 1.6-1.3L20 8H6"/></svg></span>
+          <span class="txt" id="brandVal">Terry Naturally Vitamins</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="dd-menu" role="listbox">
+          <button class="dd-opt sel" data-v="Terry Naturally Vitamins" role="option" aria-selected="true">Terry Naturally Vitamins</button>
+          <button class="dd-opt" data-v="NatureWise" role="option" aria-selected="false">NatureWise</button>
+          <button class="dd-opt" data-v="All brands" role="option" aria-selected="false">All brands</button>
+        </div>
+      </div>
+      <div class="dd mkt" id="ddMkt">
+        <button class="dd-btn" aria-haspopup="listbox" aria-expanded="false">
+          <span class="ico"><span class="flag-fr"><i></i><i></i><i></i></span></span>
+          <span class="txt" id="mktVal">amazon.fr</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="dd-menu" role="listbox">
+          <button class="dd-opt sel" data-v="amazon.fr" role="option" aria-selected="true">amazon.fr</button>
+          <button class="dd-opt" data-v="amazon.de" role="option" aria-selected="false">amazon.de</button>
+          <button class="dd-opt" data-v="amazon.es" role="option" aria-selected="false">amazon.es</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctrls" id="ctrlA" hidden>
+      <div class="dd unit" id="ddUnit">
+        <button class="dd-btn" aria-haspopup="listbox" aria-expanded="false">
+          <span class="txt" id="unitVal">Year</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="dd-menu" role="listbox">
+          <button class="dd-opt sel" data-v="Year" role="option" aria-selected="true">Year</button>
+          <button class="dd-opt" data-v="Quarter" role="option" aria-selected="false">Quarter</button>
+          <button class="dd-opt" data-v="Month" role="option" aria-selected="false">Month</button>
+        </div>
+      </div>
+      <div class="seg" role="group" aria-label="Period">
+        <button class="sel" data-p="td">To date</button>
+        <button data-p="c">Last finished</button>
+      </div>
+      <div class="seg" role="group" aria-label="Comparison">
+        <button data-c="prev">vs previous</button>
+        <button class="sel" data-c="ly">vs same period LY</button>
+      </div>
+      <button class="iq" data-pop="period" aria-label="About the period">i</button>
+    </div>
+
+    <div class="ctrls" id="ctrlB">
+      <div class="perwrap" id="perwrap">
+        <button class="perbtn" id="perbtn" aria-haspopup="dialog" aria-expanded="false">
+          <svg class="cal" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/>
+            <path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
+          <span class="pl" id="perlbl">Year to date</span>
+          <span class="px" id="percmp">vs year to date last year</span>
+          <svg class="chev" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="perpanel" id="perpanel" role="dialog" aria-label="Period and comparison"></div>
+      </div>
+      <button class="iq" data-pop="period" aria-label="About the period">i</button>
+    </div>
+  </header>
+
+  <nav class="tabbar" id="modes" role="tablist" aria-label="Module">
+    <button class="mtab sel" data-mode="health" role="tab" aria-selected="true">Account health</button>
+  </nav>
+
+  <div class="scroll"><main>
+
+   <div id="paneHealth">
+   <section class="band b1"><div class="inner">
+    <div class="sect"><h2>Overview</h2>
+      <div class="rt"><span class="hint" id="ovHint"></span>
+        <button class="iq" data-pop="overview" aria-label="About these figures">i</button></div></div>
+    <div class="kpis" id="kpis"></div>
+
+    <div class="glink" id="glink"></div>
+
+    <div class="tabstrip" id="achips" role="tablist" aria-label="Health axes"></div>
+    <p class="pickhint" id="pickHint">Pick an axis above to see the detail.</p>
+   </div></section>
+
+   <section class="band b2"><div class="inner">
+      <div class="skel" id="skel" hidden><p class="axisline" id="axisline"></p></div>
+      <div id="deep">
+
+      <div class="sect"><h2>Where do you stand?</h2>
+        <div class="rt">
+          <span class="prevw"><span class="prev" id="stateSw"></span></span>
+          <button class="iq" data-pop="stand" aria-label="How to read this">i</button></div></div>
+      <div class="block"><div class="vhead" id="vhead"></div></div>
+
+      <div class="sect"><h2>What kind of customers do you have?</h2>
+        <div class="rt"><button class="iq" data-pop="hold" aria-label="How to read this">i</button></div></div>
+      <div class="block viz">
+        <div class="cardhead"><p class="lead" id="baseLead"></p></div>
+        <div class="plot" id="v-base"></div>
+        <div class="defs" id="baseDefs"></div>
+      </div>
+
+      <div class="sect"><h2>Are you replacing the ones you lose?</h2>
+        <div class="rt"><button class="iq" data-pop="repl" aria-label="How to read this">i</button></div></div>
+      <div class="block viz">
+        <div class="cardhead"><p class="lead" id="rateLead"></p></div>
+        <div class="plot" id="v-rates"></div>
+        <div class="defs" id="rateDefs"></div>
+      </div>
+
+      <div class="trail" id="trail"></div>
+      </div>
+   </div></section>
+   </div>
+
+   <!-- ═══ Growth opportunity — the next winnable step ═══ -->
+   <div id="paneOpp2" hidden>
+     <section class="band b1" style="padding-bottom:var(--s7)"><div class="inner">
+
+       <div class="sect"><h2>Market interest</h2>
+         <div class="rt"><button class="iq" data-pop="o2mkt" aria-label="How to read this">i</button></div></div>
+       <div class="block bare"><div class="otw"><table class="otab" id="o2Tab"></table></div></div>
+
+       <div class="sect"><h2>The opportunity</h2>
+         <div class="rt"><button class="iq" data-pop="o2claim" aria-label="How to read this">i</button></div></div>
+       <div class="block"><div class="vhead" id="o2Head"></div>
+         <div class="stake" id="o2Stake"></div></div>
+
+       <div class="sect"><h2>Where you stand</h2>
+         <div class="rt"><button class="iq" data-pop="o2stand" aria-label="How to read this">i</button></div></div>
+       <div class="block">
+         <div class="colh" id="o2OrgH"></div>
+         <div class="pstrip" id="o2OrgCards"></div>
+         <!-- what is left of the page, and the category behind it, read side by side -->
+         <div class="orow">
+           <div class="orgl" id="o2OrgList"></div>
+           <aside class="oshare mside">
+             <div class="colh" id="o2MktH"></div>
+             <div class="mklist" id="o2Mkt"></div>
+           </aside>
+         </div>
+       </div>
+       <div class="block">
+         <div class="colh" id="o2SpnH"></div>
+         <div class="pstrip" id="o2SpnCards"></div>
+       </div>
+
+       <div class="sect"><h2>Your candidate</h2>
+         <div class="rt"><button class="iq" data-pop="o2horse" aria-label="How to read this">i</button></div></div>
+       <div class="block"><div id="o2Horse"></div></div>
+
+       <div class="sect"><h2>What separates you</h2>
+         <div class="rt"><button class="iq" data-pop="o2loop" aria-label="How to read this">i</button></div></div>
+       <p class="sepline" id="o2SepLead"></p>
+       <div class="o2ax" id="o2Loop"></div>
+
+       <div class="trail" id="o2Trail"></div>
+     </div></section>
+   </div>
+  </main></div>
+</div>
+
+<div class="float-sw min" id="floatSw" role="group" aria-label="Prototype options">
+  <button class="fs-pill" id="fsPill">Prototype options</button>
+  <div class="fs-hd"><span class="fs-t">Prototype options</span>
+    <button class="fs-min" id="fsMin" aria-label="Minimise"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button></div>
+  <div class="fs-g">Granularity control</div>
+  <div class="fs-opts">
+    <button class="fs-b" data-m="A">A — open control bar</button>
+    <button class="fs-b sel" data-m="B">B — defined chunks</button>
+  </div>
+  <div class="fs-g">Revenue card</div>
+  <div class="fs-opts">
+    <button class="fs-b sel" data-rev="up">Growing</button>
+    <button class="fs-b" data-rev="dn">Declining — red state</button>
+    <button class="fs-b" data-rev="jan">January — start of year</button>
+  </div>
+  <div class="fs-g">Units sold</div>
+  <div class="fs-opts">
+    <button class="fs-b" data-units="off">Hidden</button>
+    <button class="fs-b sel" data-units="on">Shown on cards</button>
+  </div>
+  <div class="fs-g">Sponsored results</div>
+  <div class="fs-opts">
+    <button class="fs-b sel" data-spn="cards">Product cards</button>
+    <button class="fs-b" data-spn="list">Compact list</button>
+  </div>
+</div>
+<script>
+const M=['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
+const SEG=[
+  {k:'loyal', n:'Loyal',  c:'#0d8b7a',r:'#b2e5da',ri:'#0a6459',t:'#fff',def:'2+ orders this year'},
+  {k:'risk',  n:'At risk',c:'#c97f0a',r:'#f7ddb0',ri:'#8a5608',t:'#fff',def:'once this year'},
+  {k:'single',n:'Single', c:'#5f9ed4',r:'#cfe0f2',ri:'#2f5d85',t:'#ffffff',def:'one order ever'}
+];
+const S={
+  loyal :[5250,5230,5210,5180,5150,5110,5080,5040,5000,4970,4940,4900],
+  risk  :[2050,2150,2270,2400,2530,2660,2790,2920,3030,3140,3250,3340],
+  single:[4580,4680,4790,4900,5010,5120,5200,5250,5180,5120,5050,4740]
+};
+const CHURN=[5.55,5.60,6.15,5.75,6.00,6.05,6.05,6.10,6.30,6.70,7.20,7.85];
+const ACQ  =[7.16,6.83,8.06,6.79,6.60,6.53,6.35,6.22,5.99,5.90,5.90,5.89];
+const tot=i=>S.loyal[i]+S.risk[i]+S.single[i];
+const ptd=v=>(v>0?'+':'\u2212')+Math.abs(v).toFixed(1)+' pp';   /* percentage points, as Omny writes them */
+const rateBad=(name,d)=>(name==='Churn')===(d>0);   /* churn up is bad, acquisition down is bad */
+/* M runs Oct(LY) → Sep(TY): index 2 is December, i.e. the position the year started from,
+   and 3–11 are January → September of this year. A fixed origin, as Elodie asked. */
+const CY=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];   /* calendar month names, declared before MPAST reads them */
+const CUR=11,REF=0,Y0=2,QTR=[2,5,8,11];
+/* Expanding shows the steps between the two rows being compared: Now at the top, the compared
+   period at the bottom, every month in between, newest first so it reads the same way collapsed
+   or open. The current month is not repeated \u2014 it is already the row above. */
+/* In a quarterly view the steps between the two rows are quarters, not months \u2014
+   the granularity of the expansion follows the granularity of the period. */
+const QSTEP={8:'Q2 2026',5:'Q1 2026',2:'Q4 2025'};
+const MP=()=>CTRL.unit==='Quarter'
+  ? [8,5,2].map(i=>({m:QSTEP[i],i}))
+  : M.map((m,i)=>({m,i})).filter(o=>o.i!==CUR).reverse();
+const baseRef=()=>P()[CTRL.cmp].row;       /* the row is whatever we are comparing against */
+const nf=n=>Math.round(n).toLocaleString('en-US');
+const pp=v=>(v>0?'+':'\u2212')+Math.abs(v).toFixed(1)+'%';
+const pn=v=>(v>0?'+':'\u2212')+nf(Math.abs(v));
+const INK='#3f3f3f',I2='#8a8a8a',I3='#aaaaaa',FNT='Figtree,system-ui,sans-serif';
+
+/* ── the period model ───────────────────────────────────────────────────────────
+   Elodie's rule: the visualisation never changes, only the granularity does.
+   A year is read in months, a quarter in weeks, a month in weeks of the month.
+   "So far" stops where the period has reached; "Complete" fills every slot. */
+/* n = the divisions of the period, labelled by date. done = how many the period has
+   reached, and endX is where the last of them actually falls, in division units \u2014 so
+   16 September lands two-thirds through Q3 and halfway through September, not on a
+   division mark. That is what makes "so far" visible rather than merely stated. */
+const GRAN={
+  Year   :{n:12,lab:CY,labC:CY,done:9,endX:8},
+  Quarter:{n:3, lab:['Jul','Aug','Sep'],labC:['Apr','May','Jun'],done:3,endX:1.70},
+  Month  :{n:5, lab:['1 Sep','8 Sep','15 Sep','22 Sep','29 Sep'],
+               labC:['1 Aug','8 Aug','15 Aug','22 Aug','29 Aug'],done:3,endX:2.07}
+};
+
+/* Headline figures per card and period. cur = where the period has reached, full = a
+   complete one, ly / prev = where the comparison series ends. For a rate (margin) s0 is
+   where the period opened and ls0 where the comparison opened. Everything else is derived,
+   so a card cannot disagree with its own chart. */
+const REVF={
+  up:{Year:{cur:9.4,full:12.8,ly:11.0,prev:11.0},
+      Quarter:{cur:3.4,full:3.9,ly:3.25,prev:3.55},
+      Month:{cur:0.86,full:1.45,ly:1.32,prev:1.38}},
+  dn:{Year:{cur:7.3,full:9.6,ly:11.0,prev:11.0},
+      Quarter:{cur:2.45,full:2.6,ly:3.25,prev:3.1},
+      Month:{cur:0.74,full:1.05,ly:1.32,prev:1.24}}
+};
+let revState='up';
+
+/* a mild seasonal ripple, so a generated series does not read as a straight ramp */
+const RIP=[1,.95,1.06,1,1.03,.97,1.05,1.02,.99,1.04,1.1,1.14];
+const interp=(a,x)=>{const i=Math.floor(x),t=x-i;
+  return i>=a.length-1?a[a.length-1]:a[i]*(1-t)+a[i+1]*t;};
+function cumSeries(n,upto,end){
+  const w=[];for(let i=0;i<n;i++)w.push(RIP[i%RIP.length]);
+  const k=end/w.slice(0,upto).reduce((a,b)=>a+b,0);
+  let a=0;return w.map(x=>+(a+=x*k).toFixed(3));
+}
+function rateSeries(n,upto,s0,end){
+  const st=(end-s0)/Math.max(1,upto-1);
+  return Array.from({length:n},(_,i)=>+(s0+st*i).toFixed(2));
+}
+
+const KPI=[
+  {n:'Revenue',u:v=>v.toFixed(1)+' M\u20ac',
+   tip:'Total sales for the selected period.'},
+  {n:'Units sold',u:v=>v.toFixed(1)+'K',
+   f:{Year:{cur:84.2,full:112,ly:106,prev:106},
+      Quarter:{cur:30.5,full:33.5,ly:31,prev:32.4},
+      Month:{cur:7.5,full:11.9,ly:11.6,prev:11.3}},
+   tip:'Units shipped for the selected period.'},
+  {n:'Margin',sec:true,note:'COGS-dependent',u:v=>v.toFixed(1)+'%',rate:true,
+   f:{Year:{s0:22.1,cur:21.3,full:21.2,ls0:22.9,ly:21.8,prev:21.8},
+      Quarter:{s0:21.6,cur:21.0,full:20.9,ls0:22.2,ly:22.0,prev:21.4},
+      Month:{s0:21.2,cur:20.8,full:20.7,ls0:21.8,ly:21.5,prev:21.1}},
+   tip:'Depends on the cost of goods entered in Omny. Incomplete COGS make this figure unreliable, so it sits below revenue and units.'}
+];
+
+/* everything a card needs for the current period, comparison and prototype state */
+function kdata(k,idx){
+  const g=GRAN[CTRL.unit],n=g.n,comp=CTRL.phase==='c';
+  const f=(k.f||REVF[revState==='jan'?'up':revState])[CTRL.unit];
+  const cnFull=comp?n:g.done;
+  const endFull=comp?f.full:f.cur;
+  const base=k.rate?rateSeries(n,cnFull,f.s0,endFull):cumSeries(n,cnFull,endFull);
+  /* the start-of-period state: one division in, the rest of the period still to run */
+  const cn=(idx===0&&revState==='jan')?1:cnFull;
+  const sp=base.slice(0,cn),end=sp[cn-1];
+  /* every point sits on its division, except the last of an unfinished period, which
+     sits where the period has actually reached */
+  const xs=sp.map((_,i)=>(!comp&&i===cn-1&&cn===g.done)?g.endX:i);
+  const pv=k.rate?rateSeries(n,n,f.ls0,f[CTRL.cmp]):cumSeries(n,n,f[CTRL.cmp]);
+  /* the comparison is read at the point the period has reached, not at the division
+     after it \u2014 two thirds of a quarter is compared with two thirds of last year's */
+  const pvp=xs.map(x=>+interp(pv,x).toFixed(3));
+  const ref=pvp[cn-1];
+  const dv=k.rate?end-ref:(end/ref-1)*100;
+  return {sp,pv,pvp,xs,lab:comp?g.labC:g.lab,slots:n,cn,
+    v:k.u(end),d:k.rate?ptd(dv):pp(dv),cls:dv<0?'dn':'up',
+    free:idx===0&&revState==='dn'};
+}
+const AX=[
+  {id:'customers',n:'Customers',s:'r',imp:.9,d:'\u22126.4 pp loyal',line:'More customers, fewer return.',
+   mode:'drag',mech:()=>'you gain '+ratio(CUR).toFixed(2)+' customers for every one you lose'},
+  {id:'market',   n:'Market',   s:'a',imp:.55,d:'\u22121.6 pp share',line:'Category outgrowing you.',
+   mode:'cap', mech:'the category grows faster than you'},
+  {id:'demand',   n:'Demand',   s:'g',imp:.12,d:'+3.1%',line:'Search steady.',
+   mode:'cap', mech:'search traffic is steady'},
+  {id:'notoriety',n:'Notoriety',s:'g',imp:.12,d:'+5.2%',line:'Brand searches holding.',
+   mode:'cap', mech:'brand searches are holding'},
+  {id:'supply',   n:'Supply & ops',s:'g',imp:.1,d:'stable',line:'Buybox and stock healthy.',
+   mode:'cap', mech:'buybox and stock are healthy'}
+];
+const STATES={
+  r:{chip:'Needs attention',s:'More customers, fewer return.',
+     b:'Since June, losses outpace gains.',
+     f:[['Active customers','12,980','+1,100','up'],['Loyal share','37.8%','\u22126.4 pp','dn'],['At risk','3,340','+1,290','dn']]},
+  a:{chip:'Watch',s:'Steady, but quality is slipping.',
+     b:'Repeat buyers down five months.',
+     f:[['Active customers','13,240','+1,360','up'],['Loyal share','38.1%','\u22122.9 pp','dn'],['At risk','3,250','+920','fl']]},
+  g:{chip:'Healthy',s:'Gaining customers, and more return.',
+     b:'Nothing needs attention.',
+     f:[['Active customers','13,240','+1,360','up'],['Loyal share','44.6%','+1.4 pp','up'],['At risk','2,180','\u2212140','up']]}
+};
+const POPS={
+  period:{t:'Period',b:'One setting for the whole module. Pick a grain, the period so far or the last complete one, and what to compare it against.'},
+  overview:{t:'Business overview',b:'The three figures the module explains. Margin depends on the cost of goods you enter, so it sits below the other two.'},
+  axes:{t:'Health axes',b:'Each axis is one thing that can hold revenue back. Always in the same order, with a dot for status.'},
+  stand:{t:'Where you stand',b:'One verdict for the axis, and the three figures behind it.'},
+  hold:{t:'What kind of customers do you have?',b:'Bar length is customer count, to scale. Colour is how often they buy.'},
+  demand:{t:'Market interest',b:'Your top five search terms by purchases, over the last 30 days. Bars are relative within each column; the figure beside each is the change against the period before.'},
+  holds:{t:'Who holds the page',b:'The first page of results for this keyword, split by the two ways a place on it is won. Sponsored is bought and can change tomorrow; organic is earned and moves over weeks or months.'},
+  mkt:{t:'Revenue share of the category',b:'Your standing across the whole category, whatever the search term. Not a keyword figure \u2014 it sits here because the brands above you in the free results are the same brands above you on the market.'},
+  opp:{t:'The opportunity',b:'The keyword where real demand exists, you convert well, and you hold almost none of the purchases without paying for them.'},
+  cand:{t:'Which product can compete',b:'Only products matching the search intent can rank on a keyword. This is the shortlist from your catalogue, and which one is closest.'},
+  why:{t:'Why theirs sit above yours',b:'The signals behind organic position \u2014 units sold over the last four weeks and badges \u2014 and the listing quality that drives them: rating, review volume and price.'},
+  loop:{t:'Close the loop',b:'What the evidence adds up to, and which health axes the opportunity runs through. Open an axis to see its current state.'},
+  repl:{t:'Are you replacing the ones you lose?',b:'Both rates are measured against last month\u2019s customers. The ratio is acquisition divided by churn \u2014 above 1.0 the base grows, below 1.0 it shrinks.'}
+};
+const FIGTIP=['Bought at least once in 12 months.',
+  'Bought 2+ times in 12 months, as a share of all active.',
+  'Bought before, only once this year. Most do not return.'];
+
+/* helpers */
+const NS='http://www.w3.org/2000/svg';
+const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)if(a[k]!=null)e.setAttribute(k,a[k]);return e;};
+const tx=(x,y,s,o={})=>{const t=el('text',{x,y,'font-size':Math.max(12,o.size||12),fill:o.fill||I3,'text-anchor':o.anchor||'start',
+  'font-weight':o.w||400,'font-family':FNT});t.textContent=s;return t;};
+const mk=(w,h)=>el('svg',{viewBox:'0 0 '+w+' '+h,role:'img'});
+const cw=id=>{const n=document.getElementById(id);return n?Math.max(n.clientWidth||900,620):900;};
+const live=m=>{document.getElementById('live').textContent=m;};
+const tip=document.getElementById('tip');
+function bind(n,h){
+  n.addEventListener('mousemove',e=>{
+    tip.innerHTML=typeof h==='function'?h():h;tip.style.display='block';
+    const r=tip.getBoundingClientRect();
+    let x=e.clientX+14,y=e.clientY+14;
+    if(x+r.width>innerWidth-8)x=e.clientX-r.width-14;
+    if(y+r.height>innerHeight-8)y=e.clientY-r.height-14;
+    tip.style.left=Math.max(8,x)+'px';tip.style.top=Math.max(8,y)+'px';
+  });
+  n.addEventListener('mouseleave',()=>tip.style.display='none');
+  n.addEventListener('blur',()=>tip.style.display='none');
+}
+const closePops=()=>{};
+/* the i is a hover affordance now \u2014 delegated so injected icons work without rebinding */
+function placeTip(e){
+  const r=tip.getBoundingClientRect();
+  let x=e.clientX+14,y=e.clientY+14;
+  if(x+r.width>innerWidth-8)x=e.clientX-r.width-14;
+  if(y+r.height>innerHeight-8)y=e.clientY-r.height-14;
+  tip.style.left=Math.max(8,x)+'px';tip.style.top=Math.max(8,y)+'px';
+}
+document.addEventListener('mousemove',e=>{
+  const b=e.target.closest?e.target.closest('.iq'):null;
+  if(!b){if(tip.dataset.src==='iq'){tip.style.display='none';tip.dataset.src='';}return;}
+  const c=b.dataset.pop?POPS[b.dataset.pop]:{t:b.dataset.title,b:b.dataset.tip};
+  if(!c)return;
+  tip.innerHTML='<div class="tn">'+c.t+'</div><div class="tm">'+c.b+'</div>';
+  tip.dataset.src='iq';tip.style.display='block';placeTip(e);
+},true);
+document.addEventListener('focusin',e=>{
+  const b=e.target.closest&&e.target.closest('.iq');if(!b)return;
+  const c=b.dataset.pop?POPS[b.dataset.pop]:{t:b.dataset.title,b:b.dataset.tip};if(!c)return;
+  const r=b.getBoundingClientRect();
+  tip.innerHTML='<div class="tn">'+c.t+'</div><div class="tm">'+c.b+'</div>';
+  tip.dataset.src='iq';tip.style.display='block';
+  placeTip({clientX:r.left,clientY:r.bottom});
+});
+
+/* time state */
+/* Each period carries three things: the name it is called by (l), the dates behind it (d),
+   and for each comparison the expression the collapsed control states (x). The expression
+   beats the raw dates \u2014 "quarter to date vs previous quarter to date" says what
+   "1 Jul \u2013 16 Sep vs 1 Apr \u2013 16 Jun" only implies. */
+const PERIODS={
+  'y-td':{l:'Year to date',d:'1 Jan \u2013 16 Sep 2026',
+    prev:{l:'Previous year to date',d:'1 Jan \u2013 16 Sep 2025',x:'previous year to date',row:'Year before'},
+    ly:  {l:'Year to date last year',d:'1 Jan \u2013 16 Sep 2025',x:'year to date last year',row:'A year ago'}},
+  'y-c':{l:'2025',d:'Full year',
+    prev:{l:'Previous year',d:'2024',x:'2024',row:'Year before'},
+    ly:  {l:'Same year before',d:'2024',x:'2024',row:'A year ago'}},
+  'q-td':{l:'Quarter to date',d:'1 Jul \u2013 16 Sep 2026',
+    prev:{l:'Previous quarter to date',d:'1 Apr \u2013 16 Jun 2026',x:'previous quarter to date',row:'Last quarter'},
+    ly:  {l:'Quarter to date last year',d:'1 Jul \u2013 16 Sep 2025',x:'quarter to date last year',row:'A year ago'}},
+  'q-c':{l:'Q2 2026',d:'Apr \u2013 Jun',
+    prev:{l:'Previous quarter',d:'Q1 2026',x:'Q1 2026',row:'Last quarter'},
+    ly:  {l:'Same quarter last year',d:'Q2 2025',x:'Q2 2025',row:'A year ago'}},
+  'm-td':{l:'Month to date',d:'1 \u2013 16 Sep 2026',
+    prev:{l:'Previous month to date',d:'1 \u2013 16 Aug 2026',x:'previous month to date',row:'Last month'},
+    ly:  {l:'Month to date last year',d:'1 \u2013 16 Sep 2025',x:'month to date last year',row:'A year ago'}},
+  'm-c':{l:'Aug 2026',d:'Full month',
+    prev:{l:'Previous month',d:'Jul 2026',x:'Jul 2026',row:'Last month'},
+    ly:  {l:'Same month last year',d:'Aug 2025',x:'Aug 2025',row:'A year ago'}}
+};
+const CTRL={unit:'Year',phase:'td',cmp:'ly'};
+/* the KPI charts run on the calendar year, not a rolling twelve months */
+const evo=true;let state='r',axis=null,baseOpen=false,rateOpen=false;
+/* Expanding means stepping through the periods between the two rows shown. That only
+   exists when the comparison is the same period last year. Against the previous period
+   there is nothing in between \u2014 so the interaction is not offered at all. */
+const canExpand=()=>CTRL.cmp==='ly';
+function toggleBase(){if(!canExpand())return;baseOpen=!baseOpen;drawBase();drawDefs();
+  live(baseOpen?'Months shown':'Comparison shown');}
+const perKey=()=>CTRL.unit[0].toLowerCase()+'-'+CTRL.phase;
+const P=()=>PERIODS[perKey()];
+const refRow=()=>P()[CTRL.cmp].row;
+const cmpLab=()=>'vs '+P()[CTRL.cmp].l.toLowerCase();
+
+function classify(v){
+  const st=[];for(let i=1;i<v.length;i++)st.push(v[i]-v[i-1]);
+  const t=v[v.length-1]-v[0],big=Math.max(...st.map(Math.abs));
+  const share=Math.abs(t)>0?big/Math.abs(t):0,dir=Math.sign(t);
+  const same=st.filter(s=>Math.sign(s)===dir).length/st.length;
+  return share>0.5?{type:'break',share}:(same>=0.7&&share<0.45?{type:'trend',share}:{type:'mixed',share});
+}
+
+/* ── KPI cards ── */
+/* smooth path through points — Catmull-Rom to cubic */
+function smooth(pts){
+  if(pts.length<2)return'';
+  let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+    d+=' C'+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+','+(p1[1]+(p2[1]-p0[1])/6).toFixed(1)+
+       ' '+(p2[0]-(p3[0]-p1[0])/6).toFixed(1)+','+(p2[1]-(p3[1]-p1[1])/6).toFixed(1)+
+       ' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);
+  }
+  return d;
+}
+/* bloom + stipple defs, reusable */
+function bloomDefs(s,id,col,cx,cy,r){
+  const d=el('defs',{});
+  const g=el('radialGradient',{id:'bl'+id,cx,cy,r,fx:cx,fy:cy});
+  g.appendChild(el('stop',{offset:'0%','stop-color':col,'stop-opacity':.30}));
+  g.appendChild(el('stop',{offset:'42%','stop-color':col,'stop-opacity':.15}));
+  g.appendChild(el('stop',{offset:'75%','stop-color':col,'stop-opacity':.05}));
+  g.appendChild(el('stop',{offset:'100%','stop-color':col,'stop-opacity':0}));
+  d.appendChild(g);
+  const p=el('pattern',{id:'dt'+id,width:6,height:6,patternUnits:'userSpaceOnUse'});
+  p.appendChild(el('circle',{cx:1.6,cy:1.6,r:1,fill:'#fff','fill-opacity':.5}));
+  d.appendChild(p);
+  const m=el('radialGradient',{id:'mk'+id,cx,cy,r,fx:cx,fy:cy});
+  m.appendChild(el('stop',{offset:'0%','stop-color':'#fff','stop-opacity':1}));
+  m.appendChild(el('stop',{offset:'62%','stop-color':'#fff','stop-opacity':.45}));
+  m.appendChild(el('stop',{offset:'100%','stop-color':'#fff','stop-opacity':0}));
+  d.appendChild(m);
+  const mask=el('mask',{id:'ms'+id});
+  mask.appendChild(el('rect',{x:0,y:0,width:'100%',height:'100%',fill:'url(#mk'+id+')'}));
+  d.appendChild(mask);
+  s.appendChild(d);
+}
+/* KPI background chart — full-bleed line, wash under the curve, anchored read-out */
+function kpiChart(k,w,h,idx,guard){
+  const s=el('svg',{viewBox:'0 0 '+w+' '+h,width:w,height:h,role:'img','aria-hidden':'true'});
+  const col=k.cls==='up'?'#0d8b7a':'#d9544a';
+  const d=el('defs',{});
+  /* the wash hangs off the curve and is gone before the floor */
+  const vg=el('linearGradient',{id:'kv'+idx,x1:0,y1:0,x2:0,y2:1});
+  [[0,.30],[36,.155],[70,.05],[100,0]].forEach(([o,op])=>
+    vg.appendChild(el('stop',{offset:o+'%','stop-color':col,'stop-opacity':op})));
+  d.appendChild(vg);
+  /* and it arrives from nothing, so the value block stays clean */
+  const fade=(id,a,b,c)=>{
+    const g=el('linearGradient',{id,x1:0,y1:0,x2:1,y2:0});
+    [[0,a],[44,b],[100,c]].forEach(([o,op])=>
+      g.appendChild(el('stop',{offset:o+'%','stop-color':'#fff','stop-opacity':op})));
+    d.appendChild(g);
+    const m=el('mask',{id:'m'+id});
+    m.appendChild(el('rect',{x:0,y:0,width:w,height:h,fill:'url(#'+id+')'}));
+    d.appendChild(m);
+  };
+  fade('kfa'+idx,0,.26,1);    /* fill  */
+  fade('kfb'+idx,.20,.52,1);  /* line  */
+  const pt=el('pattern',{id:'kd'+idx,width:6,height:6,patternUnits:'userSpaceOnUse'});
+  pt.appendChild(el('circle',{cx:1.7,cy:1.7,r:1,fill:'#fff','fill-opacity':.55}));
+  d.appendChild(pt);
+  s.appendChild(d);
+
+  const all=k.sp.concat(evo?k.pv:[]),mn=Math.min(...all),mx=Math.max(...all),rg=(mx-mn)||1;
+  /* the period fills n slots \u2014 months, weeks, whatever the granularity is \u2014 and this
+     period has reached cn of them, so the line stops short of the right edge.
+     The first point sits 12px in, so it and its read-out have room; the drawing itself
+     still runs to the card edge. */
+  const PAD=12,n=k.slots,cn=k.cn,PX=w-12-PAD;
+  /* a falling line starts below the value block, never behind it */
+  const yTop=k.free?Math.max(48,(guard||0)+18):48,yBot=h-14;
+  /* keep the curve clear of the value block, releasing smoothly past it */
+  const fl=h*0.78,gX=w*0.40,rel=w*0.28;
+  const X=f=>PAD+f*(PX/(n-1));
+  const Yr=v=>yBot-((v-mn)/rg)*(yBot-yTop);
+  const Y=(v,x)=>{if(k.free)return Yr(v);      /* a falling line needs the full height, not the floor */
+    const y=Yr(v),t=x<=gX?1:Math.max(0,1-(x-gX)/rel);
+    return y*(1-t)+Math.max(y,fl)*t;};
+  const pts=k.sp.map((v,i)=>{const x=X(k.xs[i]);return [x,Y(v,x)];});
+  const endX=pts[cn-1][0];                          /* the line ends where the year has reached */
+  /* the drawing runs to the card edge \u2014 no white margin on the left \u2014 while the points
+     themselves start at PAD, so January's marker and its read-out have room to sit in. */
+  const lead=p=>[[0,p[0][1]]].concat(p);
+  const line=smooth(lead(pts)),area=line+' L'+endX+','+h+' L0,'+h+' Z';
+  s.appendChild(el('path',{d:area,fill:'url(#kv'+idx+')',mask:'url(#mkfa'+idx+')'}));
+  s.appendChild(el('path',{d:area,fill:'url(#kd'+idx+')',mask:'url(#mkfa'+idx+')'}));
+  if(evo){
+    /* last year runs all twelve months \u2014 the reference this year is read against */
+    const pv=k.pv.map((v,i)=>[X(i),Y(v,X(i))]);
+    s.appendChild(el('path',{d:smooth(lead(pv).concat([[w,pv[n-1][1]]])),fill:'none',
+      stroke:'#cfcfcf','stroke-width':1.2,'stroke-dasharray':'3 4',mask:'url(#mkfb'+idx+')'}));
+  }
+  s.appendChild(el('path',{d:line,fill:'none',stroke:col,'stroke-width':1.8,
+    'stroke-linecap':'round',mask:'url(#mkfb'+idx+')'}));
+
+  /* where the year has reached — the blank to the right is the year still to run,
+     so the end of the line has to be marked or it reads as clipped */
+  {const ey=pts[cn-1][1];
+   s.appendChild(el('line',{x1:endX,y1:yTop-16,x2:endX,y2:yBot+12,
+     stroke:col,'stroke-opacity':.28,'stroke-width':1}));
+   s.appendChild(el('path',{d:'M'+endX+','+ey+' L'+(endX+10)+','+ey,stroke:col,
+     'stroke-opacity':.30,'stroke-width':1.8,'stroke-linecap':'round',fill:'none'}));
+   s.appendChild(el('circle',{cx:endX,cy:ey,r:3.4,fill:col}));
+   s.appendChild(el('circle',{cx:endX,cy:ey,r:3.4,fill:'none',stroke:'#fff','stroke-width':1.6}));
+   s.appendChild(tx(endX,yBot+9,k.lab[cn-1],{size:11,fill:col,anchor:'middle',w:600}));}
+
+  /* read-out — a dashed drop, a dot on the line, a card that names the point */
+  const g=el('g',{class:'ro'}),
+    vl=el('line',{y1:yTop-20,y2:yBot+10,stroke:'#cdcdcd','stroke-width':1,'stroke-dasharray':'2 3'}),
+    hl=el('circle',{r:3.2,fill:col}),
+    lab=el('g',{}),
+    box=el('rect',{rx:7,ry:7,fill:'#fff',stroke:'#e9e9e9','stroke-width':1}),
+    t1=el('text',{'font-size':12,'font-weight':600,fill:INK,'font-family':FNT}),
+    t2=el('text',{'font-size':10.5,fill:I3,'font-family':FNT}),
+    t3=el('text',{'font-size':10.5,fill:I3,'font-family':FNT});
+  lab.appendChild(box);lab.appendChild(t1);lab.appendChild(t2);lab.appendChild(t3);
+  g.appendChild(vl);g.appendChild(hl);g.appendChild(lab);s.appendChild(g);
+
+  function at(i){
+    const px=pts[i][0],py=pts[i][1];
+    vl.setAttribute('x1',px);vl.setAttribute('x2',px);
+    hl.setAttribute('cx',px);hl.setAttribute('cy',py);
+    const l1=k.u(k.sp[i]),
+          l2=k.lab[i]+(i===cn-1?' · now':''),
+          l3=evo?k.u(k.pvp[i])+' '+P()[CTRL.cmp].row.toLowerCase():'';
+    t1.textContent=l1;t2.textContent=l2;t3.textContent=l3;
+    const bh=l3?56:41,
+          bw=Math.round(Math.max(l1.length*7.4,l2.length*6.1,l3.length*6.1))+22;
+    let bx=px+12; if(bx+bw>w-6)bx=px-bw-12; bx=Math.max(6,bx);
+    let by=py+12; if(by+bh>h-6)by=py-bh-12; by=Math.max(8,by);
+    box.setAttribute('x',bx);box.setAttribute('y',by);
+    box.setAttribute('width',bw);box.setAttribute('height',bh);
+    [[t1,18],[t2,33],[t3,48]].forEach(([t,dy])=>{t.setAttribute('x',bx+11);t.setAttribute('y',by+dy);});
+  }
+  at(cn-1);
+  return {svg:s,pts,at,last:cn-1,slots:n,col};
+}
+function drawKPIs(hostId){
+  const h=document.getElementById(hostId||'kpis');if(!h)return;h.innerHTML='';
+  const D=KPI.map((k,i)=>Object.assign({},k,kdata(k,i)));
+  D.forEach((k,i)=>{
+    const c=document.createElement('div');c.className='kpi'+(k.sec?' sec':'');
+    c.innerHTML='<div class="bg"></div><div class="fg">'+
+      '<div class="khead"><span class="klab">'+k.n+
+        '<button class="iq" data-fig="k'+i+'" data-title="'+k.n+'" data-tip="'+k.tip+'" aria-label="About '+k.n+'">i</button></span>'+
+      (evo?'<span class="kdelta"><span class="karr '+k.cls+'">'+(k.cls==='up'?'\u2191':'\u2193')+'</span>'+
+        '<span class="'+k.cls+'">'+k.d.replace(/^[+\u2212]/,'')+'</span>'+
+        '<span class="kcmp">'+cmpLab()+'</span></span>':'')+
+      '</div><div><div class="kval">'+k.v+'</div></div>'+
+      (k.note?'<span class="cogs">'+k.note+'</span>':'')+'</div>';
+    h.appendChild(c);
+  });
+  h.querySelectorAll('.kpi').forEach((c,i)=>{
+    const k=D[i],w=c.clientWidth||320,ht=c.clientHeight||174;
+    const kv=c.querySelector('.kval'),cr=c.getBoundingClientRect();
+    const guard=kv?kv.getBoundingClientRect().bottom-cr.top:0;   /* bottom of the figure block */
+    const o=kpiChart(k,w,ht,(hostId||'kpis')+i,guard);   /* ids unique per card set */
+    c.querySelector('.bg').appendChild(o.svg);
+    /* the read-out follows the cursor, and settles back on now */
+    c.addEventListener('mousemove',e=>{
+      const r=c.getBoundingClientRect();
+      const rel=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+      /* the cursor reads across the whole period, and stops where it has reached */
+      o.at(Math.min(o.last,Math.round(rel*(o.slots-1))));
+    });
+    c.addEventListener('mouseleave',()=>o.at(o.last));
+  });
+}
+
+/* ── growth statement ── */
+const MODE={drag:'dragging it down',cap:'capping the upside'};
+const COUNT=['nothing','One thing','Two things','Three things','Four things','Five things'];
+const GIQ='<span class="ghi"><button class="iq" data-pop="axes" aria-label="About the axes">i</button></span>';
+function drawGlink(){
+  const bad=AX.filter(a=>a.s!=='g'),h=document.getElementById('glink');
+  /* the revenue card is the single source for this number, and it is derived
+     from the period now, so read it through kdata rather than off the definition */
+  const k0=kdata(KPI[0],0);
+  const rev=k0.d.replace(/^[+\u2212-]/,'');
+  const rising=k0.cls==='up';
+  const dir=rising?'up ':'down ';
+  if(!bad.length){
+    h.innerHTML='<p class="gh">Revenue is '+dir+rev+
+      (rising?', and nothing is holding it back this period.':', and no health axis explains it \u2014 look outside the business.')+GIQ+'</p>';return;}
+  h.innerHTML='<p class="gh">Revenue is '+dir+rev+', and '+COUNT[bad.length].toLowerCase()+
+      ' '+(bad.length===1?'is':'are')+(rising?' keeping it from more.':' behind it.')+GIQ+'</p>'+
+    '<ul class="grows">'+bad.map(a=>
+      '<li><span class="dot '+a.s+'"></span>'+
+      '<b>'+a.n+'</b><span class="gmode">'+MODE[a.mode]+'</span></li>').join('')+
+    '</ul>';
+}
+
+/* ── axis chips ── */
+function drawChips(){
+  const h=document.getElementById('achips');h.innerHTML='';
+  AX.forEach(a=>{
+    const b=document.createElement('button');
+    b.className='tab'+(a.id===axis?' sel':'');
+    b.setAttribute('role','tab');b.setAttribute('aria-selected',a.id===axis);
+    b.innerHTML='<span class="tt"><span class="dot '+a.s+'"></span>'+a.n+'</span>'+
+      (evo?'<span class="ad">'+a.d+'</span>':'')+
+      (a.id===axis?'<span class="sh"></span>':'');
+    b.onclick=()=>{const same=axis===a.id;axis=same?null:a.id;pick(!same);
+      b.scrollIntoView({block:'nearest',inline:'nearest'});};
+    h.appendChild(b);
+  });
+}
+const STC={r:'#e5413a',a:'#f0a622',g:'#2fab68'};
+function blend(hex,a){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  const m=(c,base)=>Math.round(c*a+base*(1-a));
+  return 'rgb('+m(r,250)+','+m(g,250)+','+m(b,250)+')';
+}
+function applyTint(ax){
+  const c=STC[ax.s],a=0.015+ax.imp*0.026;
+  const root=document.documentElement;
+  root.style.setProperty('--tint',blend(c,a));
+  root.style.setProperty('--tintline',blend(c,.5));   /* fill stays diluted, the line does not */
+}
+function pick(scroll){
+  drawChips();
+  const band=document.querySelector('.b2'),hint=document.getElementById('pickHint');
+  if(!axis){                                   /* the overview IS the entry point */
+    band.hidden=true;hint.hidden=false;
+    document.documentElement.style.setProperty('--tint','transparent');
+    document.documentElement.style.setProperty('--tintline','var(--line)');
+    live('Overview');return;
+  }
+  band.hidden=false;hint.hidden=true;
+  const a=AX.find(x=>x.id===axis);
+  applyTint(a);
+  document.getElementById('axisline').innerHTML='<b>'+a.n+'</b> — '+a.line.charAt(0).toLowerCase()+a.line.slice(1)+
+    ' This axis follows the same structure.';
+  const d=document.getElementById('deep'),s=document.getElementById('skel');
+  if(axis==='customers'){d.hidden=false;s.hidden=true;renderAxis();}
+  else{d.hidden=true;s.hidden=false;}
+  if(scroll)requestAnimationFrame(()=>band.scrollIntoView({behavior:'smooth',block:'start'}));
+  live(a.n+' selected');
+}
+
+/* ── verdict ── */
+function drawVerdict(){
+  const v=STATES[state];
+  document.getElementById('vhead').innerHTML=
+    '<div class="vchips"><span class="vchip '+state+'">'+v.chip+'</span></div>'+
+    '<div><p class="vsent">'+v.s+'</p><p class="vsub">'+v.b+'</p></div>'+
+    '<div class="figs">'+v.f.map((f,n)=>
+      '<div class="fig"><div class="k">'+f[0]+
+      '<button class="iq" data-fig="v'+n+'" data-title="'+f[0]+'" data-tip="'+FIGTIP[n]+'" aria-label="About '+f[0]+'">i</button></div>'+
+      '<div class="v">'+f[1]+'</div>'+
+      '<div class="d '+f[3]+'">'+(evo?f[2]:'')+'</div></div>').join('')+'</div>';
+  document.getElementById('stateSw').innerHTML=['r','a','g'].map(k=>
+    '<button data-s="'+k+'" class="'+(state===k?'sel':'')+'">'+STATES[k].chip.split(' ')[0]+'</button>').join('');
+}
+
+/* ── composition ── */
+const B={x0:96,rp:104,bh:44,grid:[0,3500,7000,10500]};
+function drawBase(){
+  const host=document.getElementById('v-base');host.innerHTML='';
+  const exp=canExpand();if(!exp)baseOpen=false;
+  host.classList.toggle('noexp',!exp);
+  const W=cw('v-base'),mx=Math.max(tot(CUR),tot(REF)),kk=(W-B.x0-B.rp)/mx;
+  const yC=evo?46:28,mH=17,mG=7;
+  const yRows=yC+B.bh+16;
+  const yR=baseOpen?yRows+MP().length*(mH+mG)+16:yC+B.bh+92;
+  const H=yR+B.bh+46;
+  const s=mk(W,H);
+  s.setAttribute('aria-label','Customer count and composition');
+  B.grid.forEach(g=>{const gx=B.x0+g*kk;
+    s.appendChild(el('line',{x1:gx,y1:6,x2:gx,y2:H-32,stroke:g===0?'#dcdcdc':'#f2f2f2','stroke-width':1}));
+    s.appendChild(tx(gx,H-12,g===0?'0':(g/1000)+'k',{size:11,anchor:'middle'}));});
+  if(!baseOpen){let cx=0,rx=0;SEG.forEach(g=>{
+    const a=S[g.k][CUR]*kk,b=S[g.k][REF]*kk;
+    s.appendChild(el('polygon',{points:(B.x0+cx)+','+(yC+B.bh)+' '+(B.x0+cx+a)+','+(yC+B.bh)+' '+(B.x0+rx+b)+','+yR+' '+(B.x0+rx)+','+yR,fill:g.c,opacity:.08}));
+    cx+=a;rx+=b;});}
+  row(s,yC,CUR,true,kk);
+  if(evo){let ax=0;SEG.forEach(g=>{const c=S[g.k][CUR],r=S[g.k][REF],w=c*kk,d=(c-r)/r*100;
+    if(w>100)s.appendChild(tx(B.x0+ax+10,yC-8,pp(d),{size:11,fill:((g.k==='risk')===(d>0))?'#d4443a':'#12924a',w:600}));ax+=w;});
+    const td=(tot(CUR)-tot(REF))/tot(REF)*100;
+    s.appendChild(tx(B.x0+tot(CUR)*kk+10,yC-8,pp(td),{size:11,fill:td<0?'#d4443a':'#12924a',w:600}));}
+  if(baseOpen){let y=yRows;MP().forEach(({m,i})=>{
+    s.appendChild(tx(B.x0-12,y+mH/2+4,m,{size:11,fill:I3,anchor:'end',w:400}));
+    let cx=0;SEG.forEach(g=>{const v=S[g.k][i],w=v*kk;
+      const r=el('rect',{x:B.x0+cx,y,width:Math.max(w-2,1),height:mH,rx:2,fill:g.r});
+      bind(r,'<div class="tn">'+g.n+' — '+m+'</div><div>'+nf(v)+' customers</div>'+
+        '<div class="tm">'+(v/tot(i)*100).toFixed(1)+'% of '+nf(tot(i))+'</div>'+
+        '<div class="tm">'+g.def+'</div>');
+      s.appendChild(r);cx+=w;});
+    s.appendChild(tx(B.x0+cx+8,y+mH/2+4,nf(tot(i)),{size:11,fill:'#c4c4c4'}));y+=mH+mG;});}
+  row(s,yR,REF,false,kk);
+  s.style.cursor=exp?'pointer':'default';
+  if(exp)s.addEventListener('click',toggleBase);
+  host.appendChild(s);
+}
+function row(s,y,i,cur,kk){
+  s.appendChild(tx(B.x0-12,y+B.bh/2+4,cur?'Now':baseRef(),{size:12,fill:cur?INK:I3,anchor:'end',w:cur?600:400}));
+  s.appendChild(tx(B.x0+tot(i)*kk+10,y+B.bh/2+4,nf(tot(i)),{size:12,fill:cur?INK:I3,w:cur?600:400}));
+  let cx=0;
+  SEG.forEach(g=>{const v=S[g.k][i],w=v*kk,c=S[g.k][CUR],r=S[g.k][REF],d=c-r;
+    const bad=(g.k==='risk'&&d>0)||(g.k!=='risk'&&d<0);
+    const rect=el('rect',{x:B.x0+cx,y,width:Math.max(w-2,1),height:B.bh,rx:3,fill:cur?g.c:g.r,class:'hit',
+      tabindex:cur?0:null,role:cur?'img':null,'aria-label':cur?g.n+' '+nf(v)+' customers':null});
+    bind(rect,'<div class="tn">'+g.n+'</div><div>'+nf(r)+' → '+nf(c)+' <b style="color:'+(bad?'#d4443a':'#12924a')+'">'+pn(d)+'</b></div>'+
+      '<div class="tm">'+(r/tot(REF)*100).toFixed(1)+'% → '+(c/tot(CUR)*100).toFixed(1)+'% of all customers</div>'+
+      '<div class="tm">'+g.def+'</div>');
+    s.appendChild(rect);
+    if(cur&&w>100){s.appendChild(tx(B.x0+cx+10,y+18,g.n,{size:12,fill:g.t,w:500}));
+      s.appendChild(tx(B.x0+cx+10,y+34,(v/tot(i)*100).toFixed(1)+'%',{size:12,fill:g.t,w:600}));}
+    if(!cur&&w>70)s.appendChild(tx(B.x0+cx+w/2,y+B.bh/2+4,(v/tot(i)*100).toFixed(1)+'%',{size:11,fill:g.ri,anchor:'middle',w:600}));
+    cx+=w;});
+}
+
+/* ── acquisition vs churn ── */
+const ratio=i=>ACQ[i]/CHURN[i];
+/* both rates are a share of the base they applied to \u2014 last month's customers */
+const BP=i=>i===0?13000:tot(i-1);
+const r10=x=>Math.round(x/10)*10;
+const GAIN=ACQ.map((a,i)=>r10(a*BP(i)/100));
+const LOST=CHURN.map((c,i)=>r10(c*BP(i)/100));
+function toggleRates(){if(!canExpand())return;rateOpen=!rateOpen;drawRates();drawDefs();
+  live(rateOpen?'Months shown':'Comparison shown');}
+function ratesTip(i){
+  const r=ratio(i);
+  return '<div class="tn">'+M[i]+(i===CUR?' \u00b7 now':'')+'</div>'+
+    '<div class="ttr"><span class="tdot" style="background:#0d8b7a"></span>Acquisition<b>'+
+      nf(GAIN[i])+'</b><span class="tp">'+ACQ[i].toFixed(2)+'%</span></div>'+
+    '<div class="ttr"><span class="tdot" style="background:#d9544a"></span>Churn<b>'+
+      nf(LOST[i])+'</b><span class="tp">'+CHURN[i].toFixed(2)+'%</span></div>'+
+    '<div class="ttr sep">Ratio<b>'+r.toFixed(2)+'</b><span class="tp"></span></div>';
+}
+function drawRates(){const h=document.getElementById('v-rates');h.innerHTML='';balance(h);}
+
+/* The balance. Opposed bars, Now on top, the reference below, months in between when opened
+   \u2014 the same collapsed/expanded grammar as the composition chart above. */
+function periodRow(s,W,y,i,cur,cx,kk,bh){
+  const a=ACQ[i],c=CHURN[i],lw=c*kk,rw=a*kk,r=ratio(i),ok=r>=1;
+  s.appendChild(tx(80,y+bh/2+4,cur?'Now':baseRef(),{size:12,fill:cur?INK:I2,anchor:'end',w:cur?600:400}));
+  const L=el('rect',{x:cx-lw,y,width:lw,height:bh,rx:3,fill:'#d9544a','fill-opacity':cur?.9:.4,
+    class:'hit',tabindex:0,role:'img','aria-label':'Churn '+c.toFixed(1)+' percent, '+(cur?'now':baseRef())});
+  const R=el('rect',{x:cx,y,width:rw,height:bh,rx:3,fill:'#0d8b7a','fill-opacity':cur?.9:.4,
+    class:'hit',tabindex:0,role:'img','aria-label':'Acquisition '+a.toFixed(1)+' percent, '+(cur?'now':baseRef())});
+  bind(L,()=>ratesTip(i));bind(R,()=>ratesTip(i));
+  s.appendChild(L);s.appendChild(R);
+  s.appendChild(tx(cx-lw-8,y+bh/2+4,c.toFixed(1)+'%',{size:12,fill:cur?INK:I3,anchor:'end',w:600}));
+  s.appendChild(tx(cx+rw+8,y+bh/2+4,a.toFixed(1)+'%',{size:12,fill:cur?INK:I3,w:600}));
+  if(cur){                              /* the move, read the way the bars point */
+    const dc=c-CHURN[REF],da=a-ACQ[REF];
+    s.appendChild(tx(cx-lw,y-9,ptd(dc),{size:12,anchor:'end',w:600,
+      fill:rateBad('Churn',dc)?'var(--dn)':'var(--up)'}));
+    s.appendChild(tx(cx+rw,y-9,ptd(da),{size:12,w:600,
+      fill:rateBad('Acquisition',da)?'var(--dn)':'var(--up)'}));
+  }
+  s.appendChild(tx(W-8,y+bh/2+(cur?-1:4),r.toFixed(2),
+    {size:cur?19:14,fill:cur?(ok?'var(--up)':'var(--dn)'):I3,anchor:'end',w:600}));
+  if(cur)s.appendChild(tx(W-8,y+bh/2+18,ok?'above 1.0':'below 1.0',{size:12,fill:I3,anchor:'end'}));
+}
+function monthRow(s,W,y,i,m,cx,kk,mH){
+  const now=i===CUR,a=ACQ[i],c=CHURN[i],lw=c*kk,rw=a*kk,r=ratio(i);
+  s.appendChild(tx(80,y+mH/2+4,m,{size:11,fill:now?INK:I3,anchor:'end',w:now?600:400}));
+  const L=el('rect',{x:cx-lw,y,width:Math.max(lw,1),height:mH,rx:2,fill:now?'#d9544a':'#fbd2cc'});
+  const R=el('rect',{x:cx,y,width:Math.max(rw,1),height:mH,rx:2,fill:now?'#0d8b7a':'#b2e5da'});
+  bind(L,()=>ratesTip(i));bind(R,()=>ratesTip(i));
+  s.appendChild(L);s.appendChild(R);
+  s.appendChild(tx(W-8,y+mH/2+4,r.toFixed(2),
+    {size:11,fill:r>=1?'#12924a':'#d4443a',anchor:'end',w:now?600:500}));
+}
+function balance(host){
+  const exp=canExpand();if(!exp)rateOpen=false;
+  host.classList.toggle('noexp',!exp);
+  const W=cw('v-rates'),labW=96,ratW=126;
+  const avail=W-labW-ratW,cx=labW+avail*0.5,kk=(avail*0.5-24)/9;
+  const bh=30,gap=44,mH=16,mG=6;
+  const yN=48,yRows=yN+bh+18;
+  const yR=rateOpen?yRows+MP().length*(mH+mG)+14:yN+bh+gap;
+  const H=yR+bh+28;
+  const s=mk(W,H);
+  s.setAttribute('aria-label','Customers leaving against customers joining');
+  s.appendChild(tx(cx-12,24,'churn',{size:11,fill:I3,anchor:'end'}));
+  s.appendChild(tx(cx+12,24,'acquisition',{size:11,fill:I3}));
+  s.appendChild(tx(W-8,24,'ratio',{size:11,fill:I3,anchor:'end'}));
+  s.appendChild(el('line',{x1:cx,y1:32,x2:cx,y2:yR+bh+10,stroke:'#dcdcdc','stroke-width':1}));
+  periodRow(s,W,yN,CUR,true,cx,kk,bh);
+  if(rateOpen){let y=yRows;MP().forEach(({m,i})=>{monthRow(s,W,y,i,m,cx,kk,mH);y+=mH+mG;});}
+  periodRow(s,W,yR,REF,false,cx,kk,bh);
+  s.style.cursor=exp?'pointer':'default';
+  if(exp)s.addEventListener('click',toggleRates);
+  host.appendChild(s);
+}
+
+function churnShare(){      /* how much of the fall the churn side explains */
+  const r0=ACQ[REF]/CHURN[REF],co=(ACQ[REF]/CHURN[CUR]-r0)/r0,ao=(ACQ[CUR]/CHURN[REF]-r0)/r0;
+  return Math.round(Math.abs(co)/(Math.abs(co)+Math.abs(ao))*100);
+}
+/* the conclusion carries the verdict and the way out \u2014 nothing else.
+   The figure line under it restated the charts above and read less clearly than they do. */
+function drawTrail(){
+  document.getElementById('trail').innerHTML=
+    '<div class="tcopy">'+
+      '<p class="sum">3,340 bought once and are unlikely to return.</p>'+
+    '</div>'+
+    '<button class="act" type="button">Open Customer Insights'+
+    '<svg viewBox="0 0 24 24"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></svg></button>';
+}
+function drawDefs(){
+  document.getElementById('baseDefs').innerHTML=
+    SEG.map(g=>'<span class="def"><i style="background:'+g.c+'"></i>'+g.n+'</span>').join('');
+  document.getElementById('rateDefs').innerHTML=
+    '<span class="def"><i style="background:#0d8b7a"></i>Acquisition</span>'+
+    '<span class="def"><i style="background:#d9544a"></i>Churn</span>'+
+    '<span class="def" style="color:var(--ink-3)">% of prior month \u00b7 ratio = acquisition \u00f7 churn</span>';
+
+}
+function renderAxis(){
+  drawVerdict();
+  document.getElementById('baseLead').textContent='The base grew all year while the regulars left';
+  document.getElementById('rateLead').textContent='Since June, churn outpaces acquisition';
+  drawBase();drawRates();drawDefs();drawTrail();
+  const sw=document.getElementById('stateSw');
+  sw.onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;state=b.dataset.s;drawVerdict();
+    document.getElementById('stateSw').onclick=sw.onclick;live(STATES[state].chip);};
+}
+function renderAll(){
+  document.getElementById('ovHint').textContent=evo?cmpLab():'';
+  drawKPIs();drawGlink();pick(false);
+}
+
+/* controls */
+function propagate(){
+  /* the range itself, not its name — you should not have to open the panel to learn
+     that the window starts on 1 January */
+  /* the control says what is being compared; the panel keeps the dates behind it */
+  document.getElementById('perlbl').textContent=P().l;
+  document.getElementById('percmp').textContent='vs '+P()[CTRL.cmp].x;
+  renderAll();
+}
+function wireDD(id,valId,after){
+  const d=document.getElementById(id),b=d.querySelector('.dd-btn');
+  b.addEventListener('click',e=>{e.stopPropagation();closePops();
+    document.querySelectorAll('.dd').forEach(x=>{if(x!==d)x.classList.remove('open')});
+    const o=d.classList.toggle('open');b.setAttribute('aria-expanded',String(o));});
+  d.querySelectorAll('.dd-opt').forEach(o=>o.addEventListener('click',()=>{
+    d.querySelectorAll('.dd-opt').forEach(x=>{x.classList.toggle('sel',x===o);x.setAttribute('aria-selected',String(x===o));});
+    document.getElementById(valId).textContent=o.dataset.v;
+    d.classList.remove('open');b.setAttribute('aria-expanded','false');
+    if(after)after(o.dataset.v);}));
+  return d;
+}
+const dd=wireDD('ddUnit','unitVal',v=>{CTRL.unit=v;propagate();});
+const ddb=dd.querySelector('.dd-btn');
+wireDD('ddBrand','brandVal');
+wireDD('ddMkt','mktVal');
+document.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-p]').forEach(x=>x.classList.toggle('sel',x===b));CTRL.phase=b.dataset.p;propagate();}));
+document.querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.seg [data-c]').forEach(x=>x.classList.toggle('sel',x===b));CTRL.cmp=b.dataset.c;propagate();}));
+
+const pw=document.getElementById('perwrap'),pb=document.getElementById('perbtn'),pp_=document.getElementById('perpanel');
+function buildPer(){const p=P();
+  pp_.innerHTML='<div class="pergrp"><h4>Period</h4><div class="pergrid"><span></span><span class="ch">So far</span><span class="ch">Complete</span>'+
+    ['Year','Quarter','Month'].map(u=>{const g=u[0].toLowerCase();
+      return '<span class="rl">'+u+'</span>'+['td','c'].map(t=>{const k=g+'-'+t,o=PERIODS[k];
+        return '<button data-k="'+k+'" class="'+(perKey()===k?'sel':'')+'"><b>'+o.l+'</b><em>'+o.d+'</em></button>';}).join('');}).join('')+
+    '</div></div><div class="pergrp"><h4>Compare with</h4><div class="cmpo">'+
+    /* the mode on the left \u2014 it is what changes the reading \u2014 the dates it resolves to on the right */
+    ['prev','ly'].map(c=>'<button data-cc="'+c+'" class="'+(CTRL.cmp===c?'sel':'')+'">'+
+        '<b>'+p[c].l+'</b><em>'+p[c].d+'</em></button>').join('')+
+    '</div></div>';}
+function closePer(){pw.classList.remove('open');pb.setAttribute('aria-expanded','false');}
+pb.addEventListener('click',e=>{e.stopPropagation();closePops();
+  if(pw.classList.contains('static'))return;
+  if(pw.classList.contains('open')){closePer();return;}buildPer();pw.classList.add('open');pb.setAttribute('aria-expanded','true');});
+pp_.addEventListener('click',e=>{e.stopPropagation();
+  const k=e.target.closest('[data-k]'),c=e.target.closest('[data-cc]');
+  if(k){const q=k.dataset.k.split('-');CTRL.unit={y:'Year',q:'Quarter',m:'Month'}[q[0]];CTRL.phase=q[1];}
+  else if(c){CTRL.cmp=c.dataset.cc;}else return;
+  syncA();propagate();buildPer();});
+function syncA(){
+  dd.querySelectorAll('.dd-opt').forEach(o=>o.classList.toggle('sel',o.dataset.v===CTRL.unit));
+  document.getElementById('unitVal').textContent=CTRL.unit;
+  document.querySelectorAll('[data-p]').forEach(b=>b.classList.toggle('sel',b.dataset.p===CTRL.phase));
+  document.querySelectorAll('.seg [data-c]').forEach(b=>b.classList.toggle('sel',b.dataset.c===CTRL.cmp));}
+document.addEventListener('click',()=>{document.querySelectorAll('.dd').forEach(d=>{d.classList.remove('open');
+  d.querySelector('.dd-btn').setAttribute('aria-expanded','false');});closePer();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){
+  document.querySelectorAll('.dd').forEach(d=>d.classList.remove('open'));closePer();closePops();}});
+document.addEventListener('focusin',e=>{const t=e.target;
+  if(t.classList&&t.classList.contains('hit')){const r=t.getBoundingClientRect();
+    t.dispatchEvent(new MouseEvent('mousemove',{clientX:r.left+r.width/2,clientY:r.bottom}));}});
+
+document.querySelectorAll('.fs-b[data-m]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.fs-b[data-m]').forEach(x=>x.classList.toggle('sel',x===b));
+  const m=b.dataset.m;document.getElementById('ctrlA').hidden=(m!=='A');document.getElementById('ctrlB').hidden=(m!=='B');
+  closePer();}));
+document.querySelectorAll('.fs-b[data-rev]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.fs-b[data-rev]').forEach(x=>x.classList.toggle('sel',x===b));
+  revState=b.dataset.rev;renderAll();
+  live('Revenue '+({up:'growing',dn:'declining',jan:'at the start of the year'}[revState]));}));
+document.getElementById('modes').addEventListener('click',e=>{
+  const b=e.target.closest('[data-mode]');if(!b)return;
+  document.querySelectorAll('#modes .mtab').forEach(x=>{x.classList.toggle('sel',x===b);
+    x.setAttribute('aria-selected',String(x===b));});
+  const m=b.dataset.mode;
+  document.getElementById('paneHealth').hidden=(m!=='health');
+  if(m==='health')requestAnimationFrame(()=>{if(axis==='customers'){drawBase();drawRates();}drawKPIs();});
+  live(b.textContent+' selected');});
+const fw=document.getElementById('floatSw');
+document.getElementById('fsMin').addEventListener('click',()=>fw.classList.add('min'));
+document.getElementById('fsPill').addEventListener('click',()=>fw.classList.remove('min'));
+
+renderAll();
+let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{
+  if(!document.getElementById('paneHealth').hidden){
+    if(axis==='customers'){drawBase();drawRates();}drawKPIs();
+  }},150);});
+</script>
+
+<script>
+/* ══════════════ opportunity ══════════════
+   One keyword, evidence first. Every figure below is declared once here and read
+   by the renderers, so the table, the SERP and the closing axes cannot disagree. */
+const KW=[
+  {r:1,k:'anxiocalm',                 vol:2116, dv:-0.9, pur:246,dp:6,   sh:90.3,dsh:-3,  cvr:23.4,dc:-0.9,rank:1, org:90},
+  {r:2,k:'cortisol rescue',           vol:2379, dv:null, pur:157,dp:null,sh:94.6,dsh:null,cvr:10.6,dc:null,rank:1, org:98},
+  {r:3,k:'comfrey cream',             vol:2754, dv:4,    pur:115,dp:220, sh:49.1,dsh:31,  cvr:20.2,dc:-4,  rank:1, org:29},
+  {r:4,k:'traumaplant comfrey cream', vol:764,  dv:-18,  pur:113,dp:140, sh:94.7,dsh:46,  cvr:26.8,dc:3,   rank:1, org:100},
+  {r:5,k:'curcumin',                  vol:38066,dv:-26,  pur:104,dp:41,  sh:2.8, dsh:1.3, cvr:14.7,dc:4,   rank:19,org:0, opp:true}
+];
+const OPP=KW[4];
+const MKT=[['THORNE',20.3],['NATUREWISE',20.3],['Terry Naturally',11.3],['QUNOL',9.1],
+  ['PURE ENCAPSULATIONS',7.6],["DOCTOR'S BEST",6.2],['GAIA HERBS',4.8],['SPORTS RESEARCH',3.9]];
+const YOUI=2;
+/* two ways onto the page, two different pieces of work \u2014 so they are listed apart.
+   Sponsored is bought and can move tomorrow; organic is earned and moves over weeks or months. */
+const SPN=[
+  {p:1,b:'NATUREWISE',     t:'Curcumin 500mg, 120 caps'},
+  {p:2,b:'Terry Naturally',t:'CuraMed 750mg',you:true},
+  {p:3,b:'QUNOL',          t:'Turmeric Curcumin Complex'}
+];
+const ORG=[
+  {p:1, b:'THORNE',        t:'Meriva-SF'},
+  {p:2, b:'NATUREWISE',    t:'Curcumin Complex'},
+  {p:3, b:'PURE ENCAPSULATIONS',t:'Curcumin 500 with Bioperine'},
+  {gap:'14 more results before you'},
+  {p:19,b:'Terry Naturally',t:'CuraMed 750mg \u00b7 your first free position',you:true}
+];
+const AHEAD=18;                       /* brands standing between you and the top of the free results */
+const CATALOG=212;
+/* only ranked products are candidates \u2014 a listing with no position is nothing to move */
+const CAND=[
+  {n:'CuraMed 750mg',best:true,tag:'Best candidate',rank:'#19 organic',bsr:'#412',rating:4.3,rev:1240,price:'29.90 €'},
+  {n:'CuraMed 375mg',tag:'Possible',rank:'#42 organic',bsr:'#1,180',rating:4.4,rev:610,price:'19.90 €'},
+  {n:'Curcumin + Boswellia',tag:'Possible',rank:'#78 organic',bsr:'#2,940',rating:4.1,rev:180,price:'34.50 €'}
+];
+const CMPB=['Terry Naturally','THORNE','NATUREWISE'];
+/* the signals Elodie named behind organic position: units over the last four weeks,
+   badges, then the listing quality itself */
+const CMPR=[
+  {k:'Organic position',        v:['#19','#3','#4'],               worse:true},
+  {k:'Units sold, last 4 weeks',v:['620','4,180','2,750'],         worse:true},
+  {k:'Badge',                   v:['None',"Amazon's Choice",'Best Seller'],worse:true},
+  {k:'Rating',                  v:['4.3','4.7','4.6'],             worse:true},
+  {k:'Reviews',                 v:['1,240','18,300','9,410'],      worse:true},
+  {k:'Price',                   v:['29.90 €','24.50 €','19.90 €'], worse:true}
+];
+const cmpOf=k=>CMPR.find(r=>r.k===k);
+const OBS=[
+  ['The demand is real.','38,066 searches a month \u2014 eighteen times your next-biggest term.'],
+  ['You convert on it.','14.7% of the shoppers who reach you buy, above your category average.'],
+  ['You are invisible on it.','Organic #19, every click paid for, 2.8% of the purchases.'],
+  ['The people holding it are already ahead of you.','THORNE and NATUREWISE own the free positions and twice your category share.']
+];
+
+const pctD=v=>v==null?'\u2014':(v>0?'+':'\u2212')+Math.abs(v)+'%';
+const ppD =v=>v==null?'\u2014':(v>0?'+':'\u2212')+Math.abs(v)+' pp';
+const dCls=v=>v==null?'':(v>0?'up':'dn');
+const ARROW='<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></svg>';
+/* thumbnail placeholder + the marketplace flag, as the Omny product cell carries them */
+const PTHUMB='<span class="pthumb">'+
+  '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">'+
+  '<path d="M9 3h6v3l1.6 2.2A4 4 0 0 1 17.3 11v7a3 3 0 0 1-3 3H9.7a3 3 0 0 1-3-3v-7a4 4 0 0 1 .7-2.8L9 6z"/>'+
+  '<path d="M7 13h10"/></svg></span>';
+const PFLAG='<span class="pflag"><i></i><i></i><i></i></span>';
+const pcell=(title,sub)=>'<span class="pcell">'+PTHUMB+
+  '<span class="ptx"><span class="ptr"><span class="pttl">'+title+'</span>'+PFLAG+'</span>'+
+  '<span class="psub">'+sub+'</span></span></span>';
+
+function mcell(n,frac,d,cls){
+  return '<div class="mc"><span class="n">'+n+'</span>'+
+    (frac==null?'':'<span class="bar"><i style="width:'+Math.max(2,frac*100).toFixed(0)+'%"></i></span>')+
+    '<span class="d '+(cls||'')+'">'+d+'</span></div>';
+}
+function opHead(){
+  const next=Math.max(...KW.filter(k=>!k.opp).map(k=>k.vol));
+  const F=[
+    ['Monthly searches',nf(OPP.vol),Math.round(OPP.vol/next)+'\u00d7 your next-biggest term','fl',
+     'How many people search this term in a month across the marketplace.'],
+    ['Your purchase share',OPP.sh.toFixed(1)+'%',ppD(OPP.dsh)+' \u00b7 '+OPP.pur+' purchases','up',
+     'Your share of everything bought on this keyword, whoever sold it.'],
+    ['Organic position','#'+OPP.rank,'100% of your clicks are paid','dn',
+     'Where your best-placed product sits in the free results.']
+  ];
+  document.getElementById('opHead').innerHTML=
+    '<div><p class="vsent">Your next point of growth is the keyword '+
+      '<span class="kwbig">\u201c'+OPP.k+'\u201d</span></p>'+
+    '<p class="vsub">The demand is real, you convert above your category average, and you hold '+
+      'almost none of it without paying for it.</p></div>'+
+    '<div class="figs">'+F.map((f,i)=>
+      '<div class="fig"><div class="k">'+f[0]+
+      '<button class="iq" data-fig="o'+i+'" data-title="'+f[0]+'" data-tip="'+f[4]+
+        '" aria-label="About '+f[0]+'">i</button></div>'+
+      '<div class="v">'+f[1]+'</div><div class="d '+f[3]+'">'+f[2]+'</div></div>').join('')+
+    '</div>';
+}
+const serpList=(rows,tag)=>rows.map(r=>{
+  if(r.gap)return '<div class="srgap"><i></i>'+r.gap+'<i></i></div>';
+  return '<div class="sr'+(r.you?' you':'')+'"><span class="p">#'+r.p+'</span>'+
+    pcell(r.b+(r.you?' \u2014 you':''),r.t)+
+    '<span class="tag '+tag+'">'+(tag==='org'?'Organic':'Sponsored')+'</span></div>';}).join('');
+/* the loop: what the evidence says, then the axes it runs through */
+const LOOP=[
+  {id:'customers',t:'Customers',
+   v:()=>nf(GAIN[CUR])+' new customers a month',
+   s:()=>'gained per lost '+ratio(CUR).toFixed(2)+', below 1.0 since June',
+   l:()=>'Non-branded search is how new customers arrive. '+OPP.sh.toFixed(1)+
+     '% of this one is yours.'},
+  {id:'market',t:'Market',
+   v:()=>MKT[YOUI][1].toFixed(1)+'% of category revenue',
+   s:()=>'third, behind two brands at '+MKT[0][1].toFixed(1)+'%',
+   l:()=>'Share only moves by taking a position those two hold today.'},
+  {id:'supply',t:'Supply & ops',
+   v:()=>cmpOf('Rating').v[0]+' rating \u00b7 '+cmpOf('Reviews').v[0]+' reviews',
+   s:()=>'against '+cmpOf('Rating').v[1]+' and '+cmpOf('Reviews').v[1]+' above you',
+   l:()=>'Green across the account. On this listing it is the blocker.'}
+];
+function gotoAxis(id){
+  const t=document.querySelector('.mtab[data-mode="health"]');if(t)t.click();
+  axis=id;pick(true);
+}
+
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     REVIEW LAYER — Elodie, daily UX/UI, 28 September
+     Additive overlay. Delete this block to remove it entirely.
+     ═══════════════════════════════════════════════════════════════════ -->
+<style>
+main{position:relative}
+#cmtLayer{position:absolute;inset:0;pointer-events:none;z-index:86}
+#cmtLayer[hidden]{display:none}
+.cmt{position:absolute;pointer-events:auto;width:24px;height:24px;border-radius:50%;
+  background:var(--orange);color:#fff;font:600 12px/1 'Figtree',system-ui,sans-serif;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.22),0 0 0 3px rgba(255,255,255,.9);
+  transition:transform .12s}
+.cmt:hover{transform:scale(1.12)}
+.cmt.on{background:var(--ink)}
+.cmt.done{background:#12924a}
+.cmt.praise{background:var(--c1)}
+.cmt.note{background:var(--ink-3)}
+
+#cmtCard{position:absolute;pointer-events:auto;z-index:94;width:352px;background:#fff;
+  border:1px solid var(--line-card);border-radius:12px;padding:16px 18px 14px;
+  box-shadow:0 16px 40px rgba(0,0,0,.16);display:none}
+#cmtCard[data-open]{display:block}
+#cmtCard .ch{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+#cmtCard .cn{width:22px;height:22px;border-radius:50%;background:var(--orange);color:#fff;
+  font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
+#cmtCard .cs{font-size:var(--f1);color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#cmtCard .st{margin-left:auto;font-size:11px;font-weight:600;border-radius:99px;padding:3px 9px;flex:none}
+#cmtCard .st.open{background:#fdecea;color:#b3251d}
+#cmtCard .st.done{background:#e4f6ec;color:#0b6b37}
+#cmtCard .st.praise{background:#e3f4f1;color:#0a6459}
+#cmtCard .st.note{background:var(--track);color:var(--ink-2)}
+#cmtCard .lb{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-3);margin:12px 0 4px}
+#cmtCard .said{font-size:var(--f2);color:var(--ink);line-height:1.5;
+  border-left:2px solid var(--orange);padding-left:11px}
+#cmtCard .why{font-size:var(--f2);color:var(--ink-2);line-height:1.5}
+#cmtCard .cf{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:11px;
+  border-top:1px solid var(--line-2);font-size:var(--f1);color:var(--ink-3)}
+#cmtCard .nav{margin-left:auto;display:flex;gap:4px}
+#cmtCard .nav button{width:24px;height:24px;border-radius:6px;border:1px solid var(--line);
+  background:#fff;color:var(--ink-2);font-size:13px;line-height:1;cursor:pointer}
+#cmtCard .nav button:hover{background:var(--track);color:var(--ink)}
+
+#cmtBar{margin-left:auto;display:flex;align-items:center;gap:9px}
+#cmtBtn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ctrl-b);
+  background:#fff;border-radius:99px;height:30px;padding:0 13px;font-size:var(--f1);
+  font-weight:600;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+#cmtBtn:hover{border-color:#d4d4d4;color:var(--ink)}
+#cmtBtn.on{background:var(--orange);border-color:var(--orange);color:#fff}
+#cmtBtn i{width:7px;height:7px;border-radius:50%;background:var(--orange);flex:none}
+#cmtBtn.on i{background:#fff}
+</style>
+<script>
+(function(){
+/* Verbatim from the 28 September call, with the reasoning she gave for each.
+   State reflects what is already in this build. */
+const C=[
+{n:1,pane:'health',sel:'#kpis',sect:'Overview · every chart',st:'done',t:'2:15',
+ said:`I think we should start at January 1st, every chart, and so we would have an incomplete colored row, depending on the time of the year we are.`,
+ why:`A rolling 12-month window slides across peak seasons, so the same position on the chart is a different month every time you open it. A fixed 1 January origin makes every comparison like-for-like at any point in the year. The header already shows year-to-date — the charts should agree with it. It also leaves room to lay a target or budget on the same axis later.
+
+APPLIED IN TWO HALVES — the KPI cards already carried twelve calendar slots with this year filling the first nine. This pass converted the two axis charts, which were still rolling October to September.`},
+
+{n:2,pane:'health',sel:'#v-base',sect:'What kind of customers · expanded rows',st:'done',t:'6:46',
+ said:`The rows are not in the right order… when we expand, it's inverted, and so we don't see the progress.`,
+ why:`Collapsed and expanded ran in opposite directions, so the eye lost the through-line. She called it an inverted pyramid that blocks reading the evolution.`},
+
+{n:3,pane:'health',sel:'#v-base',dy:58,sect:'What kind of customers · current month',st:'done',t:'6:46',
+ said:`The September row, which is highlighted here, is not necessary, because it's the biggest row at the top.`,
+ why:`It duplicates the Now row already sitting at the top of the chart.`},
+
+{n:4,pane:'health',sel:'#v-rates',sect:'Are you replacing the ones you lose',st:'done',t:'9:00',
+ said:`For this one, it's the same, just reverse the order, remove the September row, and that will be fine.`,
+ why:`Both charts share one reading grammar, so both needed the same correction.`},
+
+{n:5,pane:'health',sel:'#baseLead',dx:-4,sect:'The lead sentence',st:'done',t:'8:00',
+ said:`When we say people are stopping buying regularly, so it means a decrease in revenue, but we say it's a growth.`,
+ why:`The sentence calls it growth while describing decline. She is writing replacement text herself; her stated direction is that the message should be that we lost ground a few months ago. Her reason for caring: people have to buy the story before they will invest in the topic.
+
+INTERIM — now reads "The base grew all year while the regulars left", true to the data and not self-contradictory. Swap it when her text arrives.`},
+
+{n:6,pane:'health',sel:'#trail',sect:'Conclusion block',st:'done',t:'9:00',
+ said:`I like the open customer insights, the last block… the call to action is good.` ,
+ why:`The subline under it was cut on her instruction — "visually it balances the block, but in terms of value it conveys, it's less clear than the rest." It was example-specific filler where the charts and KPIs already carry the concept.`},
+
+{n:7,pane:'health',sel:'#trail',dy:44,sect:'Conclusion block · no action plan',st:'note',t:'10:54',
+ said:`There is no action plan to be proposed here. That can be okay, see if people have ideas.`,
+ why:`Account health concludes with a risk, not a plan. That is precisely what separates it from Growth opportunity — "it's an opportunity, it's different. So here it's the conclusion of the risk."`},
+
+{n:8,pane:'both',sel:'#modes',dx:6,sect:'Module tabs',st:'done',t:'11:47',
+ said:`We could rename health into account health and opportunity, growth opportunity. We have enough space and it's a bit clearer.`,
+ why:`Plain clarity, and the space allowed it.`},
+
+{n:9,pane:'opportunity',sel:'#paneOpp .mrow',sect:'Growth opportunity · Overview',st:'done',t:'11:47',
+ said:`My first idea is that overview, I don't think we need it… because it's related to the account health, but it's not.`,
+ why:`It repeated what Account health already covers. Wrong tab — removed.`},
+
+{n:10,pane:'opportunity',sel:'#kwLead',dx:-4,sect:'Market interest · heading and text',st:'open',t:'13:24',
+ said:`Your non-branded demand, I would replace it by market interest… I think the table here is enough, no need of explanation, because what matters after is the opportunity component.`,
+ why:`The rename is in. The surrounding sentences are not yet cut — she wants the table to stand on its own, because the payload is the opportunity component that follows it. "All the subtitles around the table should not necessarily exist."`},
+
+{n:11,pane:'opportunity',sel:'#kwTab',dy:64,sect:'Market interest · the sample data',st:'note',t:'13:24',
+ said:`Curcumin is an odd [one]… the thing is we did not categorize properly the keywords. If we do the job until the end, curcumin actually would be at the top of the table.`,
+ why:`The example set is unrepresentative because keyword categorisation is unfinished. A reason not to over-explain provisional data on screen.`},
+
+{n:12,pane:'opportunity',sel:'#kwTab',dy:128,sect:'Market interest · evolution colours',st:'done',t:'14:47',
+ said:`Regarding the colors of the evolution, it's not going in the right order. There's a growing search volume, so plus X percent, is positive. If the search volume is decreasing, it's negative.`,
+ why:`A straight inversion bug — rising demand was reading as bad. Now green up, red down.`},
+
+{n:13,pane:'opportunity',sel:'#whMkt',sect:'Revenue share · placement',st:'open',t:'17:20',
+ said:`I don't know where we can put this market share thing, because market share is more global. It's not tied to this specific word… We need to put it and to introduce it in the story at some point, but I don't know where.`,
+ why:`A scope mismatch: market share is brand-level, the opportunity is keyword-level. She solved it herself later in the same call — see comment 16, the brands ahead of you organically are the market-share leaders. That is the bridge.`},
+
+{n:14,pane:'opportunity',sel:'#opHead',sect:'The opportunity · qualification',st:'praise',t:'15:08',
+ said:`Opportunity was perfect… there is an important volume of research, and it's trendy — if there is a market which is big enough, which is trendy, that's a good sign. If we have a small purchase share, it's a good sign that we have room of improvement. And the fact that we have an organic position which is very, very low offers us a room of improvement.`,
+ why:`The strongest validation in the call — she restated the whole signal stack unprompted: volume, trend, low purchase share, low organic rank. This logic is settled; do not rework it.`},
+
+{n:15,pane:'opportunity',sel:'#whSpn',sect:'Who holds the page · organic vs sponsored',st:'done',t:'18:39',
+ said:`We should separate the organic axis from the sponsored axis, because it's two different strategies.`,
+ why:`Three reasons she gave. Different levers — organic is reviews, stock, sales, BSR; sponsored is budget. Different horizons — "you're not moving from position 19 to number one organic in one day, it's a matter of weeks, months, but the sponsor, if you pay enough tomorrow, you can be first." Different reliability — "BSR is more reliable than the sponsors, which really depends on who is looking at the search result page, because Amazon adapts the ads to the user profile."`},
+
+{n:16,pane:'opportunity',sel:'#whAhead',dx:-4,sect:'Who holds the page · brands ahead',st:'done',t:'20:11',
+ said:`For organic position, it can be interesting to highlight also the number of brands positioned before you. And so that's where you can make the link with the market share… these are the ones that are having the highest market shares in your market.`,
+ why:`This is her own answer to comment 13. It also lets the section carry fewer products — "with smaller blocks, but more focus each time, I think it could help."`},
+
+{n:17,pane:'opportunity',sel:'#cdList',sect:'Which product can compete',st:'done',t:'21:49',
+ said:`Your candidate actually will be the best ranked product that you will try to move up in the ranking.`,
+ why:`Once you know who is ahead of you, the candidate follows automatically — it is the listing you already rank best with, not a fresh choice.`},
+
+{n:18,pane:'opportunity',sel:'#cdList',dy:70,sect:'Which product can compete · what to emphasise',st:'open',t:'24:36',
+ said:`I would highlight more the BSR. There is two things: the BSR, and the organic position in the search result page. I would put this information more prominent, because that's the thing that you will have to change. That's the objective. You are ranked X. You want that to be more visible.`,
+ why:`The metric you are trying to move should dominate the card; the levers — rating, reviews, price, units — sit under it. Both figures are on the card today but they carry the same weight as everything else.`},
+
+{n:19,pane:'opportunity',sel:'#cmTab',sect:'Why theirs sit above yours · who to benchmark',st:'open',t:'22:30',
+ said:`It can be the gap between this product and the number one, and it can be the gap between this product and the number one product of the brand that is just above you in the market share analysis, because it's your direct competitor.`,
+ why:`Targeting position one is often unwinnable — "if you are a very small brand of shoes and you want to arrive to position one, it's a too ambitious goal, and it's really hard to achieve. So we need to find this right balance." The benchmark should be one rung up, not the top.`},
+
+{n:21,pane:'health',sel:'#kpis',dy:150,who:'Your feedback · 29 Sep',
+ sect:'Overview · where the year has reached',st:'done',t:'',
+ said:`I know they should stop at January, but I want you to extend them a little further, representing today's month.`,
+ why:`With a January origin the line ends at September and the rest of the card is blank, which reads as clipped rather than as the year still to run. The end of the line now carries a dot, a faint rule and the month name, and the wash tapers past it.`},
+
+{n:22,pane:'both',sel:'#perwrap',dx:-6,who:'Your feedback · 29 Sep',
+ sect:'Date range control',st:'done',t:'',
+ said:`For year-to-date versus last year, the date range selector is not very clear — improve it so that we know that we are looking at Jan.`,
+ why:`The range was only visible after opening the panel. The button now states it directly, with a calendar glyph so it reads as a date control at a glance.`},
+
+{n:20,pane:'opportunity',sel:'#cmTab',dy:76,sect:'Why theirs sit above yours · the table itself',st:'open',t:'25:12',
+ said:`All the elements that are put in the table are elements on which you can play, but it mixes different things together, like the price, the page… if you want to work on the badge, if you want to work on the price, it's different skills.`,
+ why:`A single table implies a single action. In practice price is a pricing decision, reviews are a CRM programme, content is a copy job — different owners. She has no solution either: "I don't know which direction."`}
+];
+
+const ST={open:'open',done:'applied',praise:'validated',note:'noted'};
+let on=false,cur=null;
+
+const main=document.querySelector('main');
+const layer=document.createElement('div');layer.id='cmtLayer';layer.hidden=true;main.appendChild(layer);
+const card=document.createElement('div');card.id='cmtCard';main.appendChild(card);
+
+/* the toggle rides in the module tab bar, so it is present in both panes */
+const modes=document.getElementById('modes');
+if(getComputedStyle(modes).display!=='flex')modes.style.display='flex';
+modes.style.alignItems='center';
+const bar=document.createElement('div');bar.id='cmtBar';
+bar.innerHTML='<button id="cmtBtn" type="button"><i></i>Review <span id="cmtCount"></span></button>';
+modes.appendChild(bar);
+
+const mode=()=>document.getElementById('paneOpp2').hidden?'health':'opp2';
+const live=C.filter(c=>c.pane==='both'||c.pane===mode());
+
+function close(){card.removeAttribute('data-open');cur=null;
+  btns.forEach(b=>b.classList.remove('on'));}
+
+function open(c,btn){
+  cur=c.n;
+  btns.forEach(b=>b.classList.toggle('on',b===btn));
+  card.innerHTML=
+    '<div class="ch"><span class="cn">'+c.n+'</span>'+
+      '<span class="cs">'+c.sect+'</span>'+
+      '<span class="st '+c.st+'">'+ST[c.st]+'</span></div>'+
+    '<div class="lb">She said</div><div class="said">'+c.said+'</div>'+
+    '<div class="lb">Why</div><div class="why">'+c.why+'</div>'+
+    '<div class="cf"><span>'+(c.who||c.t+' · 28 Sep')+'</span>'+
+      '<span class="nav"><button data-d="-1" type="button" aria-label="Previous">‹</button>'+
+      '<button data-d="1" type="button" aria-label="Next">›</button></span></div>';
+  card.setAttribute('data-open','');
+  place(c,btn);
+}
+function place(c,btn){
+  const mr=main.getBoundingClientRect(),br=btn.getBoundingClientRect();
+  let l=br.left-mr.left+34, t=br.top-mr.top-8;
+  if(l+352>main.clientWidth-8)l=br.left-mr.left-360;
+  card.style.left=Math.max(8,l)+'px';card.style.top=Math.max(8,t)+'px';
+}
+
+/* Markers are created once and kept. Re-mounting only moves them, so a click
+   is never interrupted by its own button being torn down and rebuilt. */
+const btns=new Map();
+const cnt=document.getElementById('cmtCount');
+function mount(){
+  const mr=main.getBoundingClientRect(),seen=new Set();
+  C.filter(c=>c.pane==='both'||c.pane===mode()).forEach(c=>{
+    const t=document.querySelector(c.sel);
+    if(!t||!t.getClientRects().length)return;
+    const ar=t.getBoundingClientRect();
+    let b=btns.get(c.n);
+    if(!b){
+      b=document.createElement('button');
+      b.className='cmt '+c.st;b.type='button';b.textContent=c.n;
+      b.title=c.sect;b.setAttribute('aria-label','Comment '+c.n+' — '+c.sect);
+      b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
+        cur===c.n?close():open(c,b);});
+      btns.set(c.n,b);
+    }
+    if(b.parentNode!==layer)layer.appendChild(b);
+    b.style.left=Math.max(4,ar.left-mr.left-30+(c.dx||0))+'px';
+    b.style.top=(ar.top-mr.top-6+(c.dy||0))+'px';
+    seen.add(c.n);
+  });
+  btns.forEach((b,n)=>{if(!seen.has(n)&&b.parentNode)b.remove();});
+  cnt.textContent=seen.size;
+  if(cur!=null){
+    const c=C.find(x=>x.n===cur);
+    if(!c||!(c.pane==='both'||c.pane===mode()))close();          /* wrong pane: really gone */
+    else{const b=btns.get(cur);if(b&&b.parentNode)place(c,b);}   /* else follow the marker */
+  }
+}
+
+/* the card swallows every click inside it, so selecting text does not close it */
+card.addEventListener('click',e=>{
+  e.stopPropagation();
+  const d=e.target.closest('[data-d]');if(!d)return;
+  /* cycle only through markers actually on screen — some anchors are hidden
+     until an axis is picked, and those have no marker to jump to */
+  const list=[...btns.entries()].filter(([,el])=>el.parentNode===layer)
+    .map(([n])=>n).sort((x,y)=>x-y);
+  if(list.length<2)return;
+  const i=list.indexOf(cur),nx=list[((i<0?0:i)+ +d.dataset.d+list.length)%list.length];
+  const b=btns.get(nx);
+  if(b){b.scrollIntoView({block:'center',behavior:'smooth'});
+    open(C.find(c=>c.n===nx),b);}
+});
+document.addEventListener('click',e=>{
+  if(e.target&&e.target.closest&&e.target.closest('#cmtLayer,#cmtCard,#cmtBtn'))return;
+  close();},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+
+document.getElementById('cmtBtn').addEventListener('click',e=>{
+  e.stopPropagation();on=!on;layer.hidden=!on;if(!on)close();
+  e.currentTarget.classList.toggle('on',on);});
+
+/* Re-place markers when the prototype redraws. Observer callbacks arrive
+   asynchronously, so a busy flag cannot guard them — skip our own nodes instead. */
+let rq;const later=()=>{clearTimeout(rq);rq=setTimeout(mount,120);};
+new MutationObserver(recs=>{
+  for(const r of recs){
+    const t=r.target;
+    if(t===layer||t===card||layer.contains(t)||card.contains(t))continue;
+    later();return;
+  }
+}).observe(main,{childList:true,subtree:true});
+addEventListener('resize',later);
+requestAnimationFrame(mount);setTimeout(mount,400);
+})();
+</script>
+
+<!-- ═══ Growth opportunity 2 — styles and logic. Additive; delete to remove. ═══ -->
+<style>
+/* One scale, one grey ramp, one rhythm — all scoped to this pane so the two tabs
+   Elodie has reviewed are untouched. Every tint is declared once, here. */
+#paneOpp2{
+  --f0:11px;                       /* pills and tags only            */
+  --f5:clamp(24px,2vw,30px);       /* objective figures              */
+  --surface:#fafafa;
+  --bad:#fdecea;   --bad-ink:#b3251d;
+  --good:#e3f4f1;  --good-ink:#0a6459;
+  --mine:#ffeee2;  --mine-ink:#e0600f;
+  --row:46px;                      /* one row height for every list  */
+}
+#paneOpp2 .iq{font-size:var(--f0)}      /* the shared glyph, brought onto the scale */
+#paneOpp2 .block{padding:var(--s6)}
+#paneOpp2 .block.bare{padding:0;overflow:hidden}
+#paneOpp2 .lead{font-size:var(--f3);font-weight:600;color:var(--ink);margin-bottom:var(--s5)}
+
+/* ── the stake: observation, never projection ── */
+#paneOpp2 .stake{margin-top:var(--s5);padding-top:var(--s5);border-top:1px solid var(--line-2)}
+/* the stake states the size of the prize \u2014 it should not outshout the section title */
+#paneOpp2 .stake .sv{font-size:16px;font-weight:600;color:var(--ink);
+  letter-spacing:-.01em;line-height:1.4;max-width:60ch}
+#paneOpp2 .stake .sv b{color:var(--ink)}
+#paneOpp2 .stake .sm{font-size:var(--f1);color:var(--ink-3);margin-top:var(--s2)}
+
+/* ── the table is the card ── */
+/* the bar owns a column, so every bar starts on the same line; value and delta
+   stack right-aligned, so every figure and every delta line up down the page */
+#paneOpp2 .o2t{width:100%;border-collapse:collapse;font-size:var(--f2);min-width:620px}
+#paneOpp2 .o2t th{font-size:var(--f1);font-weight:400;color:var(--ink-3);text-align:right;
+  padding:var(--s3) var(--s4);background:var(--surface);
+  border-bottom:1px solid var(--line-card);white-space:nowrap;vertical-align:bottom}
+#paneOpp2 .o2t th.l{text-align:left;padding-left:var(--s6)}
+#paneOpp2 .o2t th.r{padding-right:var(--s6)}
+#paneOpp2 .o2t th.bar-h{width:108px;padding-right:0}
+#paneOpp2 .o2t td{padding:var(--s3) var(--s4);text-align:right;vertical-align:middle;
+  border-bottom:1px solid var(--line-2);color:var(--ink);white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+#paneOpp2 .o2t td.l{text-align:left;padding-left:var(--s6);font-weight:500}
+#paneOpp2 .o2t td.r{padding-right:var(--s6)}
+#paneOpp2 .o2t tbody tr:last-child td{border-bottom:none}
+#paneOpp2 .o2t td.bar-c{width:108px;padding-right:0}
+#paneOpp2 .o2t .bar{display:block;width:100%;height:6px;border-radius:99px;
+  background:var(--track);overflow:hidden}
+#paneOpp2 .o2t .bar i{display:block;height:100%;border-radius:99px;background:var(--ink-3)}
+#paneOpp2 .o2t .d{display:block;font-size:var(--f1);color:var(--ink-3);
+  font-weight:400;margin-top:2px;min-height:15px}
+#paneOpp2 .o2t tr.opp td.l{box-shadow:inset 3px 0 0 var(--orange)}
+#paneOpp2 .o2t tr.opp td{background:var(--mine)}
+#paneOpp2 .o2t tr.opp .bar i{background:var(--orange)}
+
+/* ── the ladder: difficulty on the left, what the position holds on the right ── */
+#paneOpp2 .ladh{display:flex;align-items:center;gap:var(--s3);padding:0 var(--s3) var(--s2);
+  font-size:var(--f1);color:var(--ink-3)}
+#paneOpp2 .ladh .s1{flex:1}
+#paneOpp2 .ladh .s2{width:172px;flex:none}
+#paneOpp2 .ladh .s3{width:96px;flex:none;text-align:right}
+#paneOpp2 .ladh .s4{width:104px;flex:none}
+#paneOpp2 .lad{display:flex;flex-direction:column;gap:var(--s1)}
+#paneOpp2 .lr{display:flex;align-items:center;gap:var(--s3);padding:0 var(--s3);
+  height:var(--row);border-radius:8px;border:1px solid transparent;font-size:var(--f2)}
+#paneOpp2 .lr.wall{background:var(--bad)}
+#paneOpp2 .lr.rung{background:var(--good)}
+#paneOpp2 .lr.mine{background:var(--mine)}
+#paneOpp2 .lr .p{width:34px;text-align:right;color:var(--ink-3);flex:none;
+  font-variant-numeric:tabular-nums}
+#paneOpp2 .lr.mine .p{color:var(--mine-ink);font-weight:600}
+#paneOpp2 .lr .nm{flex:1;min-width:0;color:var(--ink);font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#paneOpp2 .lr .nm span{color:var(--ink-3);font-weight:400;margin-left:8px}
+#paneOpp2 .lr .rv{width:172px;flex:none;display:flex;align-items:center;gap:var(--s2)}
+#paneOpp2 .lr .rv .bar{flex:1;height:6px;border-radius:99px;background:var(--track);overflow:hidden}
+#paneOpp2 .lr .rv .bar i{display:block;height:100%;border-radius:99px;background:var(--ink-3)}
+#paneOpp2 .lr.wall .bar i{background:var(--bad-ink)}
+#paneOpp2 .lr.rung .bar i{background:var(--good-ink)}
+#paneOpp2 .lr.mine .bar i{background:var(--mine-ink)}
+#paneOpp2 .lr .rv .n{font-size:var(--f1);color:var(--ink-2);width:46px;text-align:right;
+  font-variant-numeric:tabular-nums}
+#paneOpp2 .lr .cat{width:96px;flex:none;text-align:right;color:var(--ink-2);
+  font-variant-numeric:tabular-nums}
+#paneOpp2 .lr .tg{width:104px;flex:none;font-size:var(--f0);font-weight:600;
+  border-radius:99px;padding:3px 0;text-align:center;white-space:nowrap}
+#paneOpp2 .lr .tg.wall{background:#fff;color:var(--bad-ink)}
+#paneOpp2 .lr .tg.rung{background:#fff;color:var(--good-ink)}
+#paneOpp2 .lr .tg.mine{background:#fff;color:var(--mine-ink)}
+#paneOpp2 .lr .tg.none{visibility:hidden}
+#paneOpp2 .lgap{display:flex;align-items:center;gap:var(--s3);padding:var(--s1) var(--s3);
+  font-size:var(--f1);color:var(--ink-3)}
+#paneOpp2 .lgap i{flex:1;height:1px;background:var(--line)}
+#paneOpp2 .lad{margin-top:var(--s6);padding-top:var(--s6);border-top:1px solid var(--line-2)}
+#paneOpp2 .ladlead{font-size:var(--f1);color:var(--ink-3);margin-bottom:var(--s4)}
+
+/* ── candidate: identity, then the objective, then the levers ── */
+#paneOpp2 .hz .top{display:flex;align-items:center;gap:var(--s6);flex-wrap:wrap;
+  padding-bottom:var(--s5)}
+#paneOpp2 .hz .id{display:flex;align-items:center;gap:var(--s4);min-width:0;flex:1}
+#paneOpp2 .hz .idt{font-size:var(--f2);font-weight:600;color:var(--ink)}
+#paneOpp2 .hz .ids{font-size:var(--f1);color:var(--ink-3);margin-top:2px}
+#paneOpp2 .hz .obj{display:flex;gap:var(--s7);margin-left:auto;flex:none}
+#paneOpp2 .hz .obj .v.sm{font-size:var(--f2);font-weight:600;color:var(--ink-2);
+  letter-spacing:0;margin-top:var(--s2)}
+#paneOpp2 .hz .obj .k{font-size:var(--f1);color:var(--ink-3)}
+#paneOpp2 .hz .obj .v{font-size:var(--f5);font-weight:600;color:var(--ink);
+  line-height:1.05;letter-spacing:-.02em;margin-top:var(--s1)}
+#paneOpp2 .hz .lev{display:flex;gap:var(--s7);padding-top:var(--s5);
+  border-top:1px solid var(--line-2)}
+#paneOpp2 .hz .lev .k{font-size:var(--f1);color:var(--ink-3)}
+#paneOpp2 .hz .lev .v{font-size:var(--f2);font-weight:600;color:var(--ink-2);margin-top:2px}
+#paneOpp2 .hz .cann{font-size:var(--f1);color:var(--ink-3);margin-top:var(--s5);
+  padding-top:var(--s4);border-top:1px solid var(--line-2)}
+
+/* ── what separates you ── */
+#paneOpp2 .sepline{font-size:var(--f3);font-weight:600;color:var(--ink);
+  margin-bottom:var(--s4)}
+#paneOpp2 .o2ax{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap);
+  margin-bottom:var(--s3)}
+#paneOpp2 .axc .ah{display:flex;align-items:baseline;justify-content:space-between;
+  gap:var(--s3);font-size:var(--f2);font-weight:600;color:var(--ink)}
+#paneOpp2 .axc .axtag{display:inline-flex;align-items:center;gap:6px;font-size:var(--f0);
+  font-weight:400;color:var(--ink-3);white-space:nowrap}
+
+/* ── the page as a shopper sees it: product cards, not a list of brands ──
+   Repetition is the signal. If one brand holds three of the five slots, that is
+   the finding \u2014 so every listing is shown, duplicates included. */
+#paneOpp2 .colh{font-size:calc(var(--f1) + 2px);color:var(--ink-3);margin-bottom:var(--s5)}
+#paneOpp2 .colh b{color:var(--ink);font-weight:600}
+/* the list continues the strip above it \u2014 no rule, no gap that reads as a break */
+/* the listings that are left, and the category picture beside them as evidence */
+#paneOpp2 .orow{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,.3fr);
+  gap:var(--gap);align-items:stretch;margin-top:var(--s7)}
+/* the ranking spreads over whatever height the list sets, so the two read level */
+#paneOpp2 .oshare{display:flex;flex-direction:column}
+#paneOpp2 .oshare .mklist{flex:1;display:flex;flex-direction:column;justify-content:space-between}
+@media (max-width:1180px){#paneOpp2 .orow{grid-template-columns:1fr}}
+#paneOpp2 .oshare{padding-left:var(--s6);border-left:1px solid var(--line-2)}
+#paneOpp2 .oshare .colh{margin-bottom:var(--s4)}
+#paneOpp2 .orgl{margin-top:0}
+/* the rows keep the page's own furniture: a thumbnail, and the label beside each figure */
+#paneOpp2 .lr .lth{width:34px;height:34px;flex:none;border:1px solid var(--line-2);
+  border-radius:6px;background:#fbfbfb;display:flex;align-items:center;justify-content:center}
+#paneOpp2 .lr .lth img{width:100%;height:100%;object-fit:contain;padding:3px;
+  box-sizing:border-box;border-radius:6px}
+#paneOpp2 .lr .nm .tg{font-style:normal;font-weight:600;font-size:11px;
+  border-radius:99px;padding:2px 8px;margin-left:var(--s3);white-space:nowrap}
+#paneOpp2 .lr .nm .tg.rung{background:#fff;color:var(--good-ink)}
+#paneOpp2 .lr .rv{width:130px;flex:none;display:flex;align-items:center;gap:5px;
+  font-size:13px;color:var(--ink-2)}
+#paneOpp2 .lr .rv .st{color:#e8a33d;font-size:13px;line-height:1}
+#paneOpp2 .lr .lpr{width:90px;flex:none;font-size:var(--f2);font-weight:600;color:var(--ink)}
+#paneOpp2 .lr .cat{width:150px;flex:none;text-align:right;font-size:13px;color:var(--ink-2)}
+/* your own rows are marked on the thumbnail; the best-placed one keeps the fill */
+#paneOpp2 .lr.mine{background:none}
+#paneOpp2 .lr.mine.best{background:var(--mine)}
+#paneOpp2 .lr.mine .lth{border:1.6px solid #c2530b}
+#paneOpp2 .lr.mine .lth img{padding:2px}
+/* the share track reads against the whole category, so it needs room to be read */
+#paneOpp2 .mside .shr .t{flex:1;width:auto;min-width:56px}
+/* five rows, spread over whatever height the table beside it sets \u2014 never driving it */
+#paneOpp2 .mside .mklist{justify-content:space-between}
+/* Ten even tracks, shared by both strips \u2014 a card is the same size wherever it sits,
+   and the sponsored five simply fill the first five and leave the rest empty. */
+#paneOpp2 .pstrip{display:grid;gap:var(--s5);
+  grid-template-columns:repeat(10,minmax(0,1fr))}
+#paneOpp2 .pc{display:flex;flex-direction:column;min-width:0;position:relative}
+#paneOpp2 .pc .im{background:#fbfbfb;border:1px solid var(--line-2);border-radius:8px;
+  aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;margin-bottom:7px}
+#paneOpp2 .pc .im svg{width:60%;height:60%}
+/* a real marketplace photo sits in the same box as the stand-in illustration */
+#paneOpp2 .pc .im img{width:100%;height:100%;object-fit:contain;border-radius:8px;
+  padding:6px;box-sizing:border-box}
+#paneOpp2 .pc .pos{position:absolute;top:5px;left:5px;font-size:10px;font-weight:600;
+  color:var(--ink-3);background:#fff;border:1px solid var(--line-2);border-radius:99px;padding:0 5px}
+#paneOpp2 .pc .ttl{font-size:14px;font-weight:500;color:var(--ink-2);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:4px}
+#paneOpp2 .pc .rt2{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--ink-2);white-space:nowrap}
+#paneOpp2 .pc .st{color:#e8a33d;font-size:13px;line-height:1}
+#paneOpp2 .pc .pr{font-size:var(--f2);font-weight:600;color:var(--ink);margin-top:4px}
+/* units sold is the strongest read on a listing, and the noisiest \u2014 off by default */
+#paneOpp2 .pc .un{font-size:13px;color:var(--ink-2);margin-top:2px;white-space:nowrap}
+#paneOpp2.nounits .pc .un{display:none}
+#paneOpp2 .sr .shw{margin-left:auto;font-size:var(--f2);font-weight:600;color:var(--ink)}
+#paneOpp2 .sr .shw+.tag{margin-left:var(--s4)}
+/* the reading of the row: who is out of reach, who is takeable, which one is yours */
+/* the row format keeps the marketplace photo in the thumbnail */
+#paneOpp2 .pthumb img{width:100%;height:100%;object-fit:contain;padding:3px;
+  box-sizing:border-box;border-radius:5px}
+#paneOpp2 .srlist{width:100%}
+#paneOpp2 .pc .pos .rung{font-style:normal;color:var(--good-ink);margin-left:5px;
+  padding-left:5px;border-left:1px solid var(--line-2)}
+#paneOpp2 .pc .bg{position:absolute;top:5px;right:5px;font-size:9.5px;font-weight:600;
+  border-radius:3px;padding:1px 5px;white-space:nowrap;max-width:calc(100% - 48px);
+  overflow:hidden;text-overflow:ellipsis}
+#paneOpp2 .pc .bg.ch{background:#232f3e;color:#fff}
+#paneOpp2 .pc .bg.bs{background:#cc5500;color:#fff}
+#paneOpp2 .pc.mine .im{border-color:#f6c9a6;background:#fffaf6}
+#paneOpp2 .pc.mine .ttl{color:var(--ink)}
+#paneOpp2 .pc .yb{font-size:var(--f0);font-weight:600;color:var(--mine-ink);margin-bottom:3px}
+
+/* ── the objective, with its recent movement ── */
+/* the candidate reads as one row, split by a rule */
+#paneOpp2 .hz.row{display:flex;align-items:stretch;gap:var(--s7)}
+#paneOpp2 .hz.row .id{flex:0 0 40%;align-items:center}
+#paneOpp2 .hz.row .ids{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
+#paneOpp2 .hz.row .opill{font-style:normal;font-size:var(--f1);font-weight:600;
+  color:var(--ink-2);background:var(--track);border-radius:99px;padding:2px 9px}
+#paneOpp2 .hz.row .him{width:104px;height:104px;flex:none;border:1px solid var(--line-2);
+  border-radius:10px;background:#fbfbfb;display:flex;align-items:center;justify-content:center}
+#paneOpp2 .hz.row .him img{width:100%;height:100%;object-fit:contain;padding:8px;
+  box-sizing:border-box;border-radius:10px}
+/* one flexible right-hand side: the figures sit at their natural width and the chart
+   takes whatever is left, so nothing can run past the edge of the card */
+#paneOpp2 .hz.row .lev{flex:1 1 60%;min-width:0;border-top:none;padding-top:0;margin-top:0;
+  gap:var(--s6);justify-content:flex-end}
+#paneOpp2 .hz.row .lev>div{flex:none}
+#paneOpp2 .hz.row .bsr{flex:0 1 auto;min-width:0;margin-left:0;gap:var(--s5)}
+#paneOpp2 .hz.row .bsr .spark{width:100%;max-width:240px;min-width:110px;height:40px}
+#paneOpp2 .hz.row .bsr .num{flex:none}
+/* the measured figures carry the weight here \u2014 they are what the section is about */
+#paneOpp2 .hz.row .lev .v{font-size:calc(var(--f2) + 2px);font-weight:600;color:var(--ink)}
+#paneOpp2 .hz .lev{align-items:center}
+#paneOpp2 .hz .bsr{display:flex;align-items:center;gap:var(--s4);margin-left:auto;flex:none}
+#paneOpp2 .hz .bsr .spark{width:240px;height:40px;display:block}
+#paneOpp2 .hz .bsr .num{text-align:right}
+
+/* ── desktop range: 2560 down to a narrow browser window ── */
+@media(max-width:1180px){
+  #paneOpp2 .two{grid-template-columns:1fr;gap:var(--s6)}
+  #paneOpp2 .o2ax{grid-template-columns:1fr}
+  #paneOpp2 .hz .obj{margin-left:0;width:100%;justify-content:flex-start;gap:var(--s6)}
+}
+@media(max-width:980px){
+  #paneOpp2 .lr .cat,#paneOpp2 .ladh .s3{display:none}
+  #paneOpp2 .lr .rv,#paneOpp2 .ladh .s2{width:120px}
+  #paneOpp2 .lr .tg,#paneOpp2 .ladh .s4{width:84px}
+  #paneOpp2 .hz .lev{flex-wrap:wrap;gap:var(--s5)}
+}
+</style>
+<script>
+(function(){
+let spnView='cards';
+const O2={kw:'curcumin',vol:38066,cvr:14.7,mktCvr:10.2,share:2.8,pur:104,
+          catShare:11.3,rank:19,paid:100};
+O2.total=Math.round(O2.pur/(O2.share/100));       /* observed, not modelled */
+
+/* position · brand · product · reviews (difficulty) · category share (what the seat holds) */
+const LAD=[
+ {p:1, b:'THORNE',              t:'Meriva-SF',          rev:18300, cat:20.3, tag:'wall', tl:'out of reach'},
+ {p:2, b:'NATUREWISE',          t:'Curcumin Complex',   rev:9410,  cat:20.3},
+ {p:3, b:'PURE ENCAPSULATIONS', t:'Curcumin 500',       rev:6200,  cat:7.6},
+ {gap:'positions 4 – 7'},
+ {p:8, b:'DOCTOR’S BEST',  t:'Curcumin Phytosome', rev:2100,  cat:6.2, tag:'rung', tl:'within reach'},
+ {gap:'positions 9 – 18'},
+ {p:19,b:'Terry Naturally',     t:'CuraMed 750mg',      rev:1240,  cat:11.3, tag:'mine', tl:'you', you:1}
+];
+const MAXREV=Math.max(...LAD.filter(r=>!r.gap).map(r=>r.rev));
+const HORSE={n:'CuraMed 750mg',asin:'B0037KM0RA',rank:'#19',bsr:412,rating:'4.3',rev:'1,240',price:'29.90 €',
+             others:[[41,'D3 1000 120ct'],[58,'Bone Complex']]};
+
+/* The first five results, as listings rather than brands \u2014 a brand appearing twice
+   appears twice, because that repetition is the thing worth seeing. */
+const PIMG='data:image/jpeg;base64,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';
+const ORG5=[
+ {p:1,b:'THORNE',t:'Thorne Meriva-SF 500mg Curcumin Phytosome, Sustained Release, 120 Capsules',r:4.6,rv:18300,pr:'62.00 €',u:2840,bg:'best'},
+ {p:2,b:'NATUREWISE',t:'NatureWise Turmeric Curcumin with Ginger 2400mg, 180 Capsules',r:4.5,rv:9410,pr:'24.90 €',u:1960,bg:'choice'},
+ {p:3,b:'THORNE',t:'Thorne Curcumin Phytosome 1000mg, Clinically Studied Meriva, 60 Capsules',r:4.6,rv:5880,pr:'48.00 €',u:1240},
+ {p:4,b:'NATUREWISE',t:'NatureWise Organic Turmeric Curcumin 750mg with Black Pepper, 90 Count',r:4.4,rv:7120,pr:'21.50 €',u:1510,bg:'choice'},
+ {p:5,b:'PURE ENCAPSULATIONS',t:'Pure Encapsulations Curcumin 500 with Bioperine, Hypoallergenic, 120 Caps',r:4.5,rv:6200,pr:'39.00 €',u:880},
+ {p:6,b:'QUNOL',t:'Qunol Turmeric Curcumin Complex 1500mg, Ultra High Absorption, 120 Softgels',r:4.4,rv:3050,pr:'19.90 €',u:1120},
+ {p:7,b:'THORNE',t:'Thorne Curcumin Phytosome 500mg with Meriva, 120 Capsules',r:4.6,rv:4260,pr:'55.00 €',u:760},
+ {p:8,b:'DOCTOR\u2019S BEST',t:'Doctor\u2019s Best Curcumin Phytosome with Meriva, 60 Veggie Caps',r:4.4,rv:2100,pr:'25.40 €',u:410},
+ {p:9,b:'SPORTS RESEARCH',t:'Sports Research Turmeric Curcumin C3 Complex 500mg, 120 Softgels',r:4.6,rv:4480,pr:'22.00 €',u:640},
+ {p:10,b:'NATUREWISE',t:'NatureWise Curcumin Extra Strength 500mg with Bioperine, 60 Capsules',r:4.5,rv:2980,pr:'18.90 €',u:520}
+];
+/* Beyond the first page-fold the listings stop being seen, so they stop being cards.
+   The row treatment carries the same colours \u2014 the drop in prominence is the message. */
+const ORGL=[
+ {p:12,b:'GAIA HERBS',      t:'Turmeric Supreme Extra Strength', r:4.3,rev:1680,pr:'27.90 €',u:260,tag:'rung',tl:'within reach'},
+ {gap:'positions 13 \u2013 18'},
+ {p:19,b:'Terry Naturally', t:'CuraMed 750mg Curcumin Complex',   r:4.3,rev:1240,pr:'29.90 €',u:190,tag:'mine best',you:1},
+ {gap:'your products below position 20'},
+ {p:41,b:'Terry Naturally', t:'CuraMed 375mg Curcumin Complex',   r:4.4,rev:610, pr:'19.90 €',u:70, tag:'mine',you:1},
+ {p:58,b:'Terry Naturally', t:'Curcumin + Boswellia Joint Complex',r:4.1,rev:180,pr:'34.50 €',u:30, tag:'mine',you:1}
+];
+/* A paid position is bought fresh every day, so a single scrape says very little.
+   sh is the share of the top-of-search slots each brand held over the last seven days. */
+const SPN5=[
+ {p:1,b:'NATUREWISE',sub:'Curcumin 500mg Extra Strength, 120 caps',t:'NatureWise Curcumin 500mg Extra Strength, 120 Capsules',r:4.5,rv:9410,u:1960,sh:34},
+ {p:2,b:'Terry Naturally',sub:'CuraMed 750mg Curcumin Complex, 60 softgels',t:'Terry Naturally CuraMed 750mg Curcumin Complex, 60 Softgels',r:4.3,rv:1240,u:190,sh:21,you:1},
+ {p:3,b:'QUNOL',sub:'Turmeric Curcumin Complex 1500mg',t:'Qunol Turmeric Curcumin Complex 1500mg with Ultra High Absorption',r:4.4,rv:3050,u:1120,sh:18},
+ {p:4,b:'DOCTOR\u2019S BEST',sub:'Curcumin Phytosome with Meriva, 60 caps',t:'Doctor\u2019s Best Curcumin Phytosome with Meriva, 60 Veggie Caps',r:4.4,rv:2100,u:410,sh:15},
+ {p:5,b:'SPORTS RESEARCH',sub:'Turmeric Curcumin C3 Complex 500mg',t:'Sports Research Turmeric Curcumin C3 Complex 500mg, 120 Softgels',r:4.6,rv:4480,u:640,sh:12}
+];
+/* thirty days of BSR for the candidate \u2014 lower is better, so a fall is a gain */
+const BSR30=[435,441,438,430,432,428,433,426,421,424,418,422,415,419,412,
+             416,409,413,407,410,404,408,401,405,399,402,396,400,394,412-23+23];
+BSR30[29]=HORSE.bsr;
+const BSRD=HORSE.bsr-BSR30[0];
+
+/* the marketplace badges, as the shopper sees them \u2014 they are a reason a listing
+   holds its position, so they belong on the card rather than in a footnote */
+const BADGE={choice:['Amazon\u2019s Choice','ch'],best:['Best Seller','bs']};
+const badge=b=>b&&BADGE[b]?'<span class="bg '+BADGE[b][1]+'">'+BADGE[b][0]+'</span>':'';
+const STAR='\u2605';
+/* the same five listings as rows: less to look at, and it sits closer to the
+   rest of the module's table language */
+function prows(list){return list.map(x=>
+  '<div class="sr'+(x.you?' you':'')+'">'+
+    '<span class="p">#'+x.p+'</span>'+
+    '<span class="pcell"><span class="pthumb"><img src="'+PIMG+'" alt=""></span>'+
+      '<span class="ptx"><span class="ptr"><span class="pttl">'+x.b+
+        (x.you?' \u2014 you':'')+'</span></span>'+
+      '<span class="psub">'+x.sub+'</span></span></span>'+
+    '<span class="shw">'+x.sh+'% of position 1</span>'+
+    '<span class="tag spn">Sponsored</span></div>').join('');}
+
+function pcards(list){return list.map(x=>
+  '<div class="pc'+(x.you?' mine':'')+'">'+
+    '<div class="im"><img src="'+PIMG+'" alt="">'+
+      '<span class="pos">#'+x.p+(x.tl?'<i class="rung">'+x.tl+'</i>':'')+'</span>'+
+      badge(x.bg)+'</div>'+
+    '<div class="ttl">'+x.t+'</div>'+
+    '<div class="rt2"><span class="st">'+STAR+'</span>'+x.r.toFixed(1)+
+      ' \u00b7 '+nf(x.rv)+'</div>'+
+    '<div class="pr">'+(x.sh!=null?x.sh+'% of position 1':x.pr)+'</div>'+
+    '<div class="un">'+nf(x.u)+' units sold</div></div>').join('');}
+/* Nouns, not verbs. Gaps, not remedies. Causal order, not numbered steps —
+   the review gap is what the rank gap is made of, so it leads. */
+const LOOP2=[
+ {id:'supply',   n:'Reviews',            ax:'Supply & ops', v:'1,240',
+  s:'against 1,680 at #12, the nearest position you could take',
+  l:'Green across the account. On this listing it is what holds you down.'},
+ {id:'supply',   n:'Units sold',         ax:'Supply & ops', v:'190',
+  s:'against 260 at #12 and 2,840 at the top of the page',
+  l:'Sales drive BSR, and BSR is what moves an organic position.'},
+ {id:'customers',n:'Paid share',         ax:'Customers',    v:'21%',
+  s:'of the paid slots over 7 days, and none of the free ones',
+  l:'Every click you win here is bought again the next day.'}
+];
+
+function o2Head(){
+  const F=[
+    ['Your conversion',O2.cvr.toFixed(1)+'%','against '+O2.mktCvr.toFixed(1)+'% for the market',
+     'Of the shoppers who reach you on this search, how many buy. The market figure is the same measure for everyone selling on the term.'],
+    ['Purchase share',O2.share.toFixed(1)+'%','you hold '+O2.catShare.toFixed(1)+'% of the category',
+     'Your share of everything bought on this keyword. Set against your share of the whole category, so you can see where this one sits against your own average.'],
+    ['Organic position','#'+O2.rank,'every click here is paid for',
+     'Where your best-placed product sits in the free results.']
+  ];
+  document.getElementById('o2Head').innerHTML=
+    '<div><p class="vsent">You win “'+O2.kw+'” when people find you. They don’t.</p></div>'+
+    '<div class="figs">'+F.map((f,i)=>
+      '<div class="fig"><div class="k">'+f[0]+
+      '<button class="iq" data-fig="x'+i+'" data-title="'+f[0]+'" data-tip="'+f[3]+
+        '" aria-label="About '+f[0]+'">i</button></div>'+
+      '<div class="v">'+f[1]+'</div><div class="d" style="color:var(--ink-3);font-weight:400">'+
+      f[2]+'</div></div>').join('')+'</div>';
+  document.getElementById('o2Stake').innerHTML=
+    '<p class="sv"><b>'+nf(O2.total)+'</b> people buy on this search every month. '+
+      '<b>'+O2.pur+'</b> of them buy from you.</p>'+
+    '<p class="sm">Both figures measured over the selected period. Nothing here is projected.</p>';
+}
+
+function o2Table(){
+  const mv=Math.max(...KW.map(k=>k.vol)),mp=Math.max(...KW.map(k=>k.pur));
+  let h='<thead><tr><th class="l">Keyword</th><th>Search volume</th><th>Purchases</th>'+
+    '<th>Purchase share</th><th>CVR</th><th>Organic rank</th><th class="r">Click split</th></tr></thead><tbody>';
+  KW.forEach(k=>{
+    const free=k.org,paid=100-k.org;
+    h+='<tr class="'+(k.opp?'opp':'')+'">'+
+      '<td class="l"><span class="rk">#'+k.r+'</span> '+k.k+'</td>'+
+      '<td>'+mcell(nf(k.vol),k.vol/mv,pctD(k.dv),dCls(k.dv))+'</td>'+
+      '<td>'+mcell(nf(k.pur),k.pur/mp,pctD(k.dp),dCls(k.dp))+'</td>'+
+      '<td>'+mcell(k.sh.toFixed(1)+'%',null,ppD(k.dsh),dCls(k.dsh))+'</td>'+
+      '<td>'+mcell(k.cvr.toFixed(1)+'%',null,ppD(k.dc),dCls(k.dc))+'</td>'+
+      '<td><span class="n">#'+k.rank+'</span></td>'+
+      '<td class="r g"><div class="spl"><span class="split">'+
+        '<i style="width:'+free+'%;background:#2f7d6d"></i>'+
+        '<i style="width:'+paid+'%;background:#f0a06a"></i></span>'+
+        '<span class="sl">'+(free>=paid?free+'% free':paid+'% paid')+'</span></div></td></tr>';});
+  document.getElementById('o2Tab').innerHTML=h+'</tbody>';
+}
+
+function o2Share(){
+  /* the track is the whole category, so a 20.3% share fills a fifth of it \u2014
+     the empty part is the rest of the market, which is the point of the chart */
+  document.getElementById('o2Mkt').innerHTML=MKT.slice(0,5).map((m,i)=>{
+    const you=i===YOUI,rival=i<YOUI;
+    return '<div class="shr'+(you?' you':'')+(rival?' rival':'')+'">'+
+      '<span class="blogo">'+m[0].charAt(0)+'</span>'+
+      '<span class="b">'+m[0]+(you?' \u2014 you':'')+'</span>'+
+      '<span class="t"><i style="width:'+m[1].toFixed(1)+'%"></i></span>'+
+      '<span class="v">'+m[1].toFixed(1)+'%</span></div>';}).join('');
+}
+
+function o2Stand(){
+  /* organic leads: it is where the work is, and the more reliable of the two reads */
+  document.getElementById('o2OrgH').innerHTML=
+    '<b>Organic results</b> \u2014 earned over months, and where the page is really won';
+  document.getElementById('o2OrgCards').innerHTML=pcards(ORG5);
+  /* the category picture, read against the positions beside it */
+  document.getElementById('o2MktH').innerHTML=
+    '<b>Market share</b> \u2014 the same brands, measured across the category';
+  /* the same page, continued: everything past the first ten, as rows */
+  document.getElementById('o2OrgList').innerHTML=
+    ORGL.map(r=>{
+      if(r.gap)return '<div class="lgap"><i></i>'+r.gap+'<i></i></div>';
+      /* product first, brand second \u2014 the same reading order as the cards above */
+      return '<div class="lr '+(r.tag||'')+'">'+
+        '<span class="p">#'+r.p+'</span>'+
+        '<span class="lth"><img src="'+PIMG+'" alt=""></span>'+
+        '<span class="nm">'+r.t+'<span>'+r.b+'</span>'+
+          (r.tl?'<em class="tg '+r.tag+'">'+r.tl+'</em>':'')+'</span>'+
+        '<span class="rv"><span class="st">'+STAR+'</span>'+r.r.toFixed(1)+
+          ' \u00b7 '+nf(r.rev)+'</span>'+
+        '<span class="lpr">'+r.pr+'</span>'+
+        '<span class="cat">'+nf(r.u)+' units sold</span></div>';}).join('');
+  /* the window is stated, because a paid position means nothing as a snapshot */
+  /* two readings exist: presence anywhere in top-of-search, and who owns slot one.
+     The five shown are the first; the share is the second. */
+  document.getElementById('o2SpnH').innerHTML=
+    '<b>Sponsored results</b> \u2014 the five products seen most across top-of-search '+
+    'over the last 7 days, and how often each held position 1';
+  const sp=document.getElementById('o2SpnCards');
+  sp.className=spnView==='list'?'srlist':'pstrip';
+  sp.innerHTML=spnView==='list'?prows(SPN5):pcards(SPN5);
+}
+
+
+
+/* BSR over the window shown at the top of the page. Lower is better, so the line
+   falling is the shape you want \u2014 the colour follows the gain, not the sign. */
+function bsrSpark(data,good){
+  const w=240,h=40,mn=Math.min(...data),mx=Math.max(...data),rg=(mx-mn)||1;
+  const col=good?'#0d8b7a':'#d9544a';
+  const ns='http://www.w3.org/2000/svg';
+  const s=document.createElementNS(ns,'svg');
+  s.setAttribute('viewBox','0 0 '+w+' '+h);s.setAttribute('class','spark');
+  const X=i=>2+i*((w-4)/(data.length-1)),Y=v=>h-4-((v-mn)/rg)*(h-12);
+  const d=data.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+  const mk=(t,a)=>{const e=document.createElementNS(ns,t);
+    for(const k in a)e.setAttribute(k,a[k]);return e;};
+  s.appendChild(mk('path',{d:d+' L'+X(data.length-1)+','+h+' L'+X(0)+','+h+' Z',
+    fill:col,'fill-opacity':.10,stroke:'none'}));
+  s.appendChild(mk('path',{d,fill:'none',stroke:col,'stroke-width':1.6,
+    'stroke-linecap':'round','stroke-linejoin':'round'}));
+  const dot=mk('circle',{r:2.8,fill:col,cx:X(data.length-1),cy:Y(data[data.length-1])});
+  s.appendChild(dot);
+  /* one hit area per day, so the whole window is readable rather than just its ends */
+  data.forEach((v,i)=>{
+    const r=mk('rect',{x:X(i)-((w-4)/(data.length-1))/2,y:0,
+      width:(w-4)/(data.length-1),height:h,fill:'transparent'});
+    r.addEventListener('mouseenter',()=>{dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v));});
+    bind(r,'<div class="tn">Day '+(i+1)+' of 30</div><div>BSR <b>#'+nf(v)+'</b></div>'+
+      '<div class="tm">'+(i?(v-data[i-1]>0?'+':'\u2212')+Math.abs(v-data[i-1])+' on the day before':'start of the window')+'</div>');
+    s.appendChild(r);});
+  s.addEventListener('mouseleave',()=>{
+    dot.setAttribute('cx',X(data.length-1));dot.setAttribute('cy',Y(data[data.length-1]));});
+  return s;
+}
+
+function o2Horse(){
+  const o=(k,v)=>'<div><div class="k">'+k+'</div><div class="v">'+v+'</div></div>';
+  /* one row: the listing on the left, everything measured about it on the right */
+  document.getElementById('o2Horse').innerHTML='<div class="hz row">'+
+    '<div class="id"><span class="him"><img src="'+PIMG+'" alt=""></span>'+
+      '<div><div class="idt">'+HORSE.n+'</div>'+
+      '<div class="ids">ASIN '+HORSE.asin+
+        '<em class="opill">organic '+HORSE.rank+'</em></div></div></div>'+
+    '<div class="lev">'+o('Rating',HORSE.rating)+o('Reviews',HORSE.rev)+o('Price',HORSE.price)+
+      '<div class="bsr"><span class="sparkwrap"></span>'+
+        '<div class="num"><div class="k">BSR</div><div class="v">#'+nf(HORSE.bsr)+'</div></div>'+
+      '</div></div>'+
+    '</div>';
+  document.querySelector('#o2Horse .sparkwrap').appendChild(bsrSpark(BSR30,BSRD<0));
+}
+
+function o2Loop(){
+  document.getElementById('o2SepLead').textContent=
+    'Three things separate you from #12, the nearest position within reach.';
+  document.getElementById('o2Loop').innerHTML=LOOP2.map(a=>{
+    const ax=AX.find(x=>x.id===a.id)||{s:'g'};
+    return '<button class="axc" type="button" data-ax="'+a.id+'">'+
+      '<span class="ah">'+a.n+'<span class="axtag"><span class="dot '+ax.s+'"></span>'+
+        a.ax+'</span></span>'+
+      '<span class="av">'+a.v+'</span><span class="as">'+a.s+'</span>'+
+      '<span class="ago">Open the axis'+ARROW+'</span></button>';}).join('');
+  document.getElementById('o2Loop').onclick=e=>{
+    const b=e.target.closest('[data-ax]');if(!b)return;gotoAxis(b.dataset.ax);};
+  document.getElementById('o2Trail').innerHTML=
+    '<div class="tcopy"><p class="sum">The full keyword story lives in Market Insights</p>'+
+    '<p class="tmeta">Search funnel, rank history and competitor tracking for every non-branded term.</p></div>'+
+    '<button class="act" type="button">Open the search funnel'+ARROW+'</button>';
+}
+
+window.renderOpp2=function(){o2Table();o2Share();o2Head();o2Stand();o2Horse();o2Loop();};
+
+const modes=document.getElementById('modes');
+const t3=document.createElement('button');
+t3.className='mtab';t3.type='button';t3.setAttribute('role','tab');
+t3.setAttribute('aria-selected','false');t3.dataset.mode='opp2';
+t3.textContent='Growth opportunity';
+modes.insertBefore(t3,modes.querySelector('#cmtBar')||null);
+document.querySelectorAll('.fs-b[data-units]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.fs-b[data-units]').forEach(x=>x.classList.toggle('sel',x===b));
+  document.getElementById('paneOpp2').classList.toggle('nounits',b.dataset.units==='off');}));
+
+document.querySelectorAll('.fs-b[data-spn]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.fs-b[data-spn]').forEach(x=>x.classList.toggle('sel',x===b));
+  spnView=b.dataset.spn;
+  if(!document.getElementById('paneOpp2').hidden)window.renderOpp2();}));
+
+modes.addEventListener('click',e=>{
+  const b=e.target.closest('[data-mode]');if(!b)return;
+  const opp=b.dataset.mode==='opp2';
+  document.getElementById('paneOpp2').hidden=!opp;
+  /* the keyword story runs on windows the data fixes \u2014 monthly volumes, a seven-day
+     average on sponsored \u2014 so the period control becomes a statement of the window */
+  const pw=document.getElementById('perwrap');
+  pw.classList.toggle('static',opp);
+  if(opp)document.getElementById('perlbl').textContent='Last 30 days';
+  else propagate();
+  if(opp)requestAnimationFrame(window.renderOpp2);
+});
+
+Object.assign(POPS,{
+  o2mkt:{t:'Market interest',b:'Your five biggest non-branded terms by purchases. The bar is the size of each against the largest; the figure beside it is the change on the period before.'},
+  o2share:{t:'Revenue share of the category',b:'Your standing across the whole category, whatever the search term. Categories and keyword results are not the same level \u2014 this sits apart from the keyword story for that reason.'},
+  o2claim:{t:'The opportunity',b:'One search where the demand is large, you already convert above the market rate, and you hold almost none of the purchases. Every figure here is measured, none projected.'},
+  o2stand:{t:'Where you stand',b:'Paid positions are won by bidding and change tomorrow. Free positions are earned and move over months. They need different work.'},
+  o2lad:{t:'How far ahead they are',b:'Review counts are the best available read on how entrenched a position is. The category share beside each row is what that seat is worth to the brand holding it today.'},
+  o2horse:{t:'Your candidate',b:'Rank and BSR are what you are trying to change. Rating, reviews and price are what you change them with.'},
+  o2loop:{t:'What separates you',b:'Three observed gaps between you and the position above. Each belongs to an axis of account health \u2014 open the axis to see it at account level.'}
+});
+})();
+</script>
+</body>
+</html>

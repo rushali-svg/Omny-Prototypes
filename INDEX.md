@@ -30,6 +30,7 @@ Interactive HTML prototypes for Omny UX iterations. Each prototype lives in its 
 |---|---|---|---|---|
 | Revenue comparison viz — iterations | v1 | 🔄 Iterating | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/revenue-comparison-viz-iterations.html) |
 | Strategic module — full prototype (Sep 23) | v1 | 🔄 Iterating | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-23-09.html) |
+| Strategic module — Opp2 handoff (Sep 30) | — | ✅ Finalized | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-opp2-handoff.html) |
 
 
 ## Module Access Feature (Platform Modularization)
@@ -51,4 +52,4 @@ Interactive HTML prototypes for Omny UX iterations. Each prototype lives in its 
 
 A prototype gets a row here **in the same commit** that adds its HTML file. Superseded versions keep their rows (status changed to 📁) so the iteration trail stays visible. One line per prototype — richer context lives in the respective Figma module files.
 
-*Last updated: 2026-08-05*
+*Last updated: 2026-09-30*
