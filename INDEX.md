@@ -31,8 +31,8 @@ Interactive HTML prototypes for Omny UX iterations. Each prototype lives in its 
 | Revenue comparison viz — iterations | v1 | 🔄 Iterating | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/revenue-comparison-viz-iterations.html) |
 | Strategic module — full prototype (Sep 23) | v1 | 🔄 Iterating | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-23-09.html) |
 | Strategic module — Opp2 handoff (Sep 30) | — | 📁 Superseded | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-opp2-handoff.html) |
-| Strategic module — full prototype (Oct 5) | v3 | 🔄 Iterating | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-opp2-oct_5.html) |
-| Strategic module — Opp2 handoff (Oct 5) | — | ✅ Finalized | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-v3-oct_05.html) |
+| Strategic module — V2 (Oct 5) | v2 | 🔄 Iterating | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-opp2-oct_5.html) |
+| Strategic module — V3-after meeting feedback handoff (Oct 5) | v3 | ✅ Hand-off | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-v3-oct_05.html) |
 
 
 ## Module Access Feature (Platform Modularization)
