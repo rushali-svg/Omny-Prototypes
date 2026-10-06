@@ -33,6 +33,7 @@ Interactive HTML prototypes for Omny UX iterations. Each prototype lives in its 
 | Strategic module — Opp2 handoff (Sep 30) | — | 📁 Superseded | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-opp2-handoff.html) |
 | Strategic module — V2 (Oct 5) | v2 | 🔄 Iterating | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-opp2-oct_5.html) |
 | Strategic module — V3-after meeting feedback handoff (Oct 5) | v3 | ✅ Hand-off | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-v3-oct_05.html) |
+| Strategic module — V4 (Oct 6) | v4 | 🔄 Iterating | — | [View](https://rushali-svg.github.io/Omny-Prototypes/strategic%20module/strategic-module-v4-oct_06.html) |
 
 
 ## Module Access Feature (Platform Modularization)
